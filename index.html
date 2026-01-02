@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZSC 丨 Galgame - AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基础重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: none;
+            touch-action: manipulation;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        
+        /* 配置界面 - 移动端竖屏 */
+        #configScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: 1000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .logo-area {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+        
+        .logo {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+        }
+        
+        .config-form {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #ff7e5f;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: #000;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6464ff, #9d9dff);
+            margin-top: 5px;
+        }
+        
+        .btn-tertiary {
+            background: linear-gradient(90deg, #ff9a5f, #ffc47b);
+            margin-top: 5px;
+        }
+        
+        /* 上传图片区域 */
+        .upload-area {
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed rgba(255, 126, 95, 0.5);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .upload-btn {
+            background: rgba(255, 126, 95, 0.1);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            color: #ff7e5f;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .upload-btn:hover {
+            background: rgba(255, 126, 95, 0.2);
+        }
+        
+        .upload-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid rgba(255, 126, 95, 0.3);
+            display: none;
+        }
+        
+        .upload-hint {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        /* 游戏主界面 - 移动端强制横屏 */
+        #gameScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 移动端强制横屏 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #gameScreen {
+                width: 100vh;
+                height: 100vw;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+            }
+        }
+        
+        /* 全屏背景 */
+        .game-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            /* 移除背景上的毛玻璃效果 */
+        }
+        
+        /* 游戏内容区域 */
+        .game-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 顶部背景和角色区域 */
+        .game-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            background: transparent;
+            max-height: calc(100% - 120px);
+        }
+        
+        /* 左侧角色区域 */
+        .character-area {
+            flex: 0 0 40%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 15px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.15);
+            border-right: 3px solid rgba(255, 126, 95, 0.7);
+        }
+        
+        .character {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .character-image {
+            max-width: 100%;
+            max-height: 70%;
+            border-radius: 10px;
+            border: 3px solid rgba(255, 126, 95, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            object-fit: cover;
+        }
+        
+        .character-icon {
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+            display: none;
+        }
+        
+        .character-name {
+            font-size: 1.3rem;
+            color: #ff7e5f;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 126, 95, 0.3);
+            margin-top: 15px;
+        }
+        
+        /* 右侧对话区域 */
+        .dialogue-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            min-width: 0;
+        }
+        
+        /* 对话内容区域 */
+        .conversation-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 0;
+        }
+        
+        .dialogue-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            min-height: 100%;
+        }
+        
+        .dialogue-message {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+            background: rgba(0, 0, 0, 0.25);
+        }
+        
+        .player-message {
+            border-left: 3px solid #ff7e5f;
+            margin-left: 5px;
+        }
+        
+        .ai-message {
+            border-left: 3px solid #4a90e2;
+            margin-right: 5px;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #ff7e5f;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ai-message .message-sender {
+            color: #4a90e2;
+        }
+        
+        .message-text {
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .affection-status {
+            border: none !important;
+            color: #ff7e5f;
+        }
+        
+        .mood-status {
+            border: none !important;
+            color: #4a90e2;
+        }
+        
+        .expression-status {
+            border: none !important;
+            color: #9b59b6;
+        }
+        
+        .status-label {
+            font-weight: bold;
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        /* 底部选项区域 - 横向排列 */
+        .options-area {
+            height: 120px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 3px solid rgba(255, 126, 95, 0.7);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            position: relative;
+            z-index: 5;
+            flex-shrink: 0;
+            scroll-behavior: smooth;
+        }
+        
+        .options-container {
+            display: flex;
+            gap: 10px;
+            height: 100%;
+            align-items: center;
+            padding: 10px 0;
+            width: max-content;
+            min-width: 100%;
+        }
+        
+        .option-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            padding: 12px 15px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+            max-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .option-btn:active {
+            background: rgba(255, 126, 95, 0.2);
+            border-color: #ff7e5f;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .option-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 126, 95, 0.1) 50%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .option-btn:hover::before,
+        .option-btn:active::before {
+            opacity: 1;
+        }
+        
+        .option-btn span {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .option-number {
+            position: absolute;
+            top: 6px;
+            left: 10px;
+            font-size: 0.8rem;
+            color: rgba(255, 126, 95, 0.8);
+            font-weight: bold;
+        }
+        
+        /* 自定义输入选项 */
+        .custom-option-btn {
+            background: rgba(100, 100, 255, 0.1);
+            border: 2px solid rgba(100, 100, 255, 0.5);
+        }
+        
+        .custom-option-btn:active {
+            background: rgba(100, 100, 255, 0.2);
+            border-color: #6464ff;
+        }
+        
+        .custom-option-btn .option-number {
+            color: rgba(100, 100, 255, 0.8);
+        }
+        
+        /* 自定义输入对话框 */
+        .custom-input-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .custom-input-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(100, 100, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .custom-input-title {
+            font-size: 1.2rem;
+            color: #6464ff;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .custom-input-field {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .custom-input-field:focus {
+            outline: none;
+            border-color: #6464ff;
+        }
+        
+        .custom-input-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .custom-input-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .custom-input-submit {
+            background: linear-gradient(90deg, #6464ff, #9d9dff);
+            color: white;
+        }
+        
+        .custom-input-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .custom-input-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 控制按钮 */
+        .controls-area {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            color: #fff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-btn:active {
+            background: rgba(255, 126, 95, 0.3);
+            transform: scale(0.95);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 加载遮罩 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 126, 95, 0.3);
+            border-radius: 50%;
+            border-top-color: #ff7e5f;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-text {
+            color: #ff7e5f;
+            font-size: 1rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 毛玻璃提醒 */
+        .reminder-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.4);
+            color: #ff7e5f;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 1100;
+            text-align: center;
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .reminder-close {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 25px;
+            height: 25px;
+            background: rgba(255, 126, 95, 0.8);
+            border-radius: 50%;
+            border: none;
+            color: #000;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 126, 95, 0.3);
+            border-radius: 6px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 126, 95, 0.5);
+        }
+        
+        /* 移动端滚动条优化 - 修复滑动问题 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            
+            /* 修复底部选项区域滑动问题 */
+            .options-area {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+                touch-action: pan-x;
+                overscroll-behavior-x: contain;
+                /* 确保滚动条可见 */
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 126, 95, 0.5) rgba(0, 0, 0, 0.1);
+            }
+            
+            .options-area::-webkit-scrollbar {
+                display: block;
+                height: 6px;
+            }
+            
+            .options-area::-webkit-scrollbar-thumb {
+                background: rgba(255, 126, 95, 0.6);
+                border-radius: 10px;
+                border: 2px solid rgba(0, 0, 0, 0.2);
+            }
+            
+            .options-area::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+                margin: 0 5px;
+            }
+            
+            /* 改善选项按钮间距 */
+            .option-btn {
+                min-width: 140px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+                min-height: 65px;
+            }
+            
+            .options-container {
+                gap: 8px;
+            }
+        }
+        
+        /* 选项区域滚动条优化 */
+        .options-area::-webkit-scrollbar {
+            height: 12px;
+        }
+        
+        .options-area::-webkit-scrollbar-thumb {
+            background: rgba(255, 126, 95, 0.5);
+            border-radius: 8px;
+            border: 3px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .options-area::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+        
+        /* 桌面端样式 */
+        @media (min-width: 1025px) {
+            .character-area {
+                flex: 0 0 35%;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .config-form {
+                padding: 25px;
+            }
+            
+            .option-btn {
+                min-width: 180px;
+                font-size: 1rem;
+            }
+            
+            .dialogue-message {
+                padding: 12px 15px;
+                font-size: 1.1rem;
+            }
+            
+            .message-text {
+                font-size: 1.05rem;
+            }
+            
+            .status-item {
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* 移动端横屏优化 */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            /* 原生横屏模式 */
+            #gameScreen {
+                transform: none;
+            }
+            
+            .character-area {
+                flex: 0 0 35%;
+            }
+            
+            .controls-area {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .control-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .dialogue-message {
+                padding: 10px 12px;
+                margin-bottom: 12px;
+            }
+            
+            .option-btn {
+                min-width: 140px;
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .status-item {
+                font-size: 0.75rem;
+                padding: 3px 6px;
+            }
+        }
+        
+        /* 移动端强制横屏 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #gameScreen {
+                width: 100vh;
+                height: 100vw;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+            }
+            
+            .character-area {
+                flex: 0 0 40%;
+            }
+            
+            .conversation-container {
+                padding: 12px;
+            }
+            
+            .dialogue-content {
+                font-size: 0.95rem;
+            }
+            
+            .dialogue-message {
+                padding: 8px 10px;
+                margin-bottom: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .message-text {
+                font-size: 0.9rem;
+            }
+            
+            .option-btn {
+                min-width: 130px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+                min-height: 65px;
+            }
+            
+            .options-area {
+                height: 110px;
+                padding: 0 12px;
+                /* 确保滑动正常 */
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            .controls-area {
+                top: 8px;
+                right: 8px;
+            }
+            
+            .control-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            .status-indicator {
+                gap: 5px;
+            }
+            
+            .status-item {
+                font-size: 0.7rem;
+                padding: 2px 5px;
+            }
+            
+            .reminder-overlay {
+                bottom: 15px;
+                font-size: 0.9rem;
+                padding: 10px 16px;
+                max-width: 90%;
+            }
+        }
+        
+        /* 非常小的屏幕设备 */
+        @media (max-width: 480px) {
+            .character-area {
+                flex: 0 0 45%;
+            }
+            
+            .option-btn {
+                min-width: 120px;
+                padding: 8px 10px;
+                font-size: 0.8rem;
+                min-height: 60px;
+            }
+            
+            .options-area {
+                height: 100px;
+                padding: 0 10px;
+                /* 确保滑动正常 */
+                touch-action: pan-x;
+                scrollbar-width: thin;
+            }
+            
+            .options-container {
+                gap: 8px;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .config-form {
+                padding: 15px;
+            }
+            
+            .status-indicator {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .status-item {
+                font-size: 0.65rem;
+                padding: 2px 4px;
+            }
+            
+            .reminder-overlay {
+                bottom: 10px;
+                font-size: 0.85rem;
+                padding: 8px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 毛玻璃提醒 -->
+    <div class="reminder-overlay" id="reminderOverlay">
+        去给作者三连😡👊👊
+        <button class="reminder-close" id="reminderClose">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <!-- 配置界面 - 移动端竖屏 -->
+    <div id="configScreen">
+        <div class="logo-area">
+            <div class="logo">AI Galgame</div>
+            <div class="subtitle">全部基于AI的galagame</div>
+        </div>
+        
+        <div class="config-form">
+            <!-- 上传背景图片区域 -->
+            <div class="upload-area">
+                <div class="form-group">
+                    <label for="bgImageUpload"><i class="fas fa-image"></i> 上传背景图片</label>
+                    <input type="file" id="bgImageUpload" accept="image/*" style="display: none;">
+                    <div class="upload-btn" id="bgUploadBtn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>选择背景图片</span>
+                    </div>
+                    <img id="bgImagePreview" class="image-preview" alt="背景预览">
+                    <div class="upload-hint">上传一张图片作为游戏背景（建议使用横屏图片）</div>
+                </div>
+            </div>
+            
+            <!-- 上传角色图片区域 -->
+            <div class="upload-area">
+                <div class="form-group">
+                    <label for="characterImageUpload"><i class="fas fa-user-circle"></i> 上传角色图片（可选）</label>
+                    <input type="file" id="characterImageUpload" accept="image/*" style="display: none;">
+                    <div class="upload-btn" id="characterUploadBtn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>选择角色图片</span>
+                    </div>
+                    <img id="characterImagePreview" class="image-preview" alt="角色预览">
+                    <div class="upload-hint">上传一张角色图片，将显示在游戏左侧（可选）</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="apiUrl"><i class="fas fa-link"></i> API端点URL</label>
+                <input type="text" id="apiUrl" placeholder="请填写标准链接" value="">
+            </div>
+            
+            <div class="form-group">
+                <label for="apiKey"><i class="fas fa-key"></i> API密钥</label>
+                <input type="password" id="apiKey" placeholder="输入您的API密钥">
+            </div>
+            
+            <div class="form-group">
+                <label for="modelName"><i class="fas fa-microchip"></i> 模型名称</label>
+                <input type="text" id="modelName" placeholder="例如: deepseek-ai/DeepSeek-R1" value="">
+            </div>
+            
+            <div class="form-group">
+                <label for="characterName"><i class="fas fa-user"></i> 角色名称</label>
+                <input type="text" id="characterName" placeholder="例如: AI女友" value="猫娘女友">
+            </div>
+            
+            <div class="form-group">
+                <label for="systemPrompt"><i class="fas fa-book"></i> 角色设定</label>
+                <textarea id="systemPrompt" placeholder="在这里描述角色的性格、背景、说话风格等设定。AI回复的格式已固定为JSON格式，无需在此处指定。">你是一个猫娘，与user是情侣关系，语气可爱粘人</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="initialPrompt"><i class="fas fa-play-circle"></i> 初始对话</label>
+                <input type="text" id="initialPrompt" placeholder="例如:自己想😡👊👊" value="自己想😡👊👊">
+            </div>
+            
+            <button id="startGameBtn" class="btn">
+                <i class="fas fa-play"></i> 开始游戏
+            </button>
+            
+            <button id="restoreDefaultBtn" class="btn btn-tertiary">
+                <i class="fas fa-undo"></i> 恢复默认设置
+            </button>
+            
+            <button id="clearStorageBtn" class="btn btn-secondary">
+                <i class="fas fa-trash"></i> 清除缓存配置
+            </button>
+        </div>
+    </div>
+    
+    <!-- 游戏界面 - 移动端强制横屏 -->
+    <div id="gameScreen" class="hidden">
+        <!-- 全屏背景 -->
+        <div class="game-bg" id="gameBackground"></div>
+        
+        <!-- 游戏内容区域 -->
+        <div class="game-content">
+            <!-- 主游戏区域 -->
+            <div class="game-area">
+                <!-- 左侧角色区域 -->
+                <div class="character-area">
+                    <div class="character">
+                        <img id="characterImage" class="character-image hidden" alt="角色图片">
+                        <i class="fas fa-user-circle character-icon" id="characterIcon"></i>
+                        <div class="character-name" id="characterNameDisplay">猫娘女友</div>
+                    </div>
+                </div>
+                
+                <!-- 右侧对话区域 -->
+                <div class="dialogue-area">
+                    <!-- 对话内容区域 -->
+                    <div class="conversation-container" id="conversationContainer">
+                        <div class="dialogue-content" id="dialogueContent">
+                            <!-- 对话内容将动态显示在这里 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部选项区域 -->
+            <div class="options-area" id="optionsArea">
+                <div class="options-container" id="optionsContainer">
+                    <!-- 选项按钮将动态生成在这里 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="controls-area">
+            <button class="control-btn" id="backToConfigBtn" title="返回设置">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="control-btn" id="resetGameBtn" title="重新开始">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+        
+        <!-- 加载遮罩 -->
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">🤔AI思考中不要退出...</div>
+        </div>
+        
+        <!-- 自定义输入对话框 -->
+        <div class="custom-input-overlay hidden" id="customInputOverlay">
+            <div class="custom-input-container">
+                <div class="custom-input-title">
+                    <i class="fas fa-keyboard"></i> 自定义输入
+                </div>
+                <input type="text" class="custom-input-field" id="customInputField" placeholder="请输入您想说的话...">
+                <div class="custom-input-buttons">
+                    <button class="custom-input-btn custom-input-submit" id="customInputSubmit">发送</button>
+                    <button class="custom-input-btn custom-input-cancel" id="customInputCancel">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态管理
+        const gameState = {
+            apiUrl: '',
+            apiKey: '',
+            modelName: '',
+            characterName: '',
+            systemPrompt: '',
+            initialPrompt: '',
+            bgImage: null, // 背景图片
+            characterImage: null, // 角色图片
+            messages: [],
+            isProcessing: false,
+            currentAffection: 50, // 初始好感度 (0-100)
+            currentMood: "中性", // 当前情绪
+            currentExpression: "平静" // 当前神态
+        };
+
+        // 默认设置
+        const DEFAULT_SETTINGS = {
+            characterName: "猫娘女友",
+            systemPrompt: "你是一个猫娘，与user是情侣关系，语气可爱粘人",
+            initialPrompt: "自己想😡👊👊"
+        };
+
+        // DOM元素
+        const configScreen = document.getElementById('configScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const clearStorageBtn = document.getElementById('clearStorageBtn');
+        const restoreDefaultBtn = document.getElementById('restoreDefaultBtn');
+        const backToConfigBtn = document.getElementById('backToConfigBtn');
+        const resetGameBtn = document.getElementById('resetGameBtn');
+        const characterNameDisplay = document.getElementById('characterNameDisplay');
+        const characterImage = document.getElementById('characterImage');
+        const characterIcon = document.getElementById('characterIcon');
+        const dialogueContent = document.getElementById('dialogueContent');
+        const conversationContainer = document.getElementById('conversationContainer');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const gameBackground = document.getElementById('gameBackground');
+        
+        // 自定义输入相关元素
+        const customInputOverlay = document.getElementById('customInputOverlay');
+        const customInputField = document.getElementById('customInputField');
+        const customInputSubmit = document.getElementById('customInputSubmit');
+        const customInputCancel = document.getElementById('customInputCancel');
+        
+        // 配置输入元素
+        const apiUrlInput = document.getElementById('apiUrl');
+        const apiKeyInput = document.getElementById('apiKey');
+        const modelNameInput = document.getElementById('modelName');
+        const characterNameInput = document.getElementById('characterName');
+        const systemPromptInput = document.getElementById('systemPrompt');
+        const initialPromptInput = document.getElementById('initialPrompt');
+        
+        // 图片上传相关元素
+        const bgImageUpload = document.getElementById('bgImageUpload');
+        const bgUploadBtn = document.getElementById('bgUploadBtn');
+        const bgImagePreview = document.getElementById('bgImagePreview');
+        
+        const characterImageUpload = document.getElementById('characterImageUpload');
+        const characterUploadBtn = document.getElementById('characterUploadBtn');
+        const characterImagePreview = document.getElementById('characterImagePreview');
+        
+        // 提醒相关元素
+        const reminderOverlay = document.getElementById('reminderOverlay');
+        const reminderClose = document.getElementById('reminderClose');
+        
+        // 存储配置的键名
+        const STORAGE_KEYS = {
+            API_URL: 'galgame_api_url',
+            API_KEY: 'galgame_api_key',
+            MODEL_NAME: 'galgame_model_name',
+            CHARACTER_NAME: 'galgame_character_name',
+            SYSTEM_PROMPT: 'galgame_system_prompt',
+            INITIAL_PROMPT: 'galgame_initial_prompt',
+            BG_IMAGE: 'galgame_bg_image',
+            CHARACTER_IMAGE: 'galgame_character_image'
+        };
+        
+        // 固定的格式要求 - 不在用户界面显示
+        const FIXED_FORMAT_REQUIREMENT = "\n\n【格式要求】\n请确保在每次回复中提供三个选项供玩家选择，并计算并返回当前的好感度、情绪和神态。三个选项中必须有两个选项态度是相反的（例如：一个积极/同意，一个消极/拒绝，第三个可以是中立或其他态度）。请以以下JSON格式返回你的回复：\n{\n  \"response\": \"你的回复内容\",\n  \"options\": [\"选项1\", \"选项2\", \"选项3\"],\n  \"affection\": 当前好感度值(整数，范围0-100),\n  \"mood\": \"当前情绪描述\",\n  \"expression\": \"当前神态描述\"\n}\n请严格遵守这个JSON格式，不要添加任何其他内容。生成的选项为用户的动作而不是ai的，选项内的人称不要搞错。好感度应该根据之前的互动和当前对话内容计算，情绪和神态应该与当前对话内容一致。语言和选项应该更符合现实，无比真实。生成的三个选项中必须有两个选项态度是相反的。";
+        
+        // 保存配置到本地存储
+        function saveConfigToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.API_URL, gameState.apiUrl);
+                // 注意：API密钥是敏感信息，但为了用户体验我们缓存它
+                // 在实际应用中可能需要更安全的方式
+                localStorage.setItem(STORAGE_KEYS.API_KEY, gameState.apiKey);
+                localStorage.setItem(STORAGE_KEYS.MODEL_NAME, gameState.modelName);
+                localStorage.setItem(STORAGE_KEYS.CHARACTER_NAME, gameState.characterName);
+                localStorage.setItem(STORAGE_KEYS.SYSTEM_PROMPT, gameState.systemPrompt);
+                localStorage.setItem(STORAGE_KEYS.INITIAL_PROMPT, gameState.initialPrompt);
+                
+                // 图片可能很大，检查大小后再存储
+                if (gameState.bgImage && gameState.bgImage.length < 1000000) { // 限制1MB
+                    localStorage.setItem(STORAGE_KEYS.BG_IMAGE, gameState.bgImage);
+                } else if (gameState.bgImage) {
+                    console.warn('背景图片太大，未保存到缓存');
+                }
+                
+                if (gameState.characterImage && gameState.characterImage.length < 1000000) { // 限制1MB
+                    localStorage.setItem(STORAGE_KEYS.CHARACTER_IMAGE, gameState.characterImage);
+                } else if (gameState.characterImage) {
+                    console.warn('角色图片太大，未保存到缓存');
+                }
+                
+                console.log('配置已保存到本地存储');
+            } catch (error) {
+                console.error('保存配置到本地存储失败:', error);
+            }
+        }
+        
+        // 从本地存储加载配置
+        function loadConfigFromStorage() {
+            try {
+                const savedApiUrl = localStorage.getItem(STORAGE_KEYS.API_URL);
+                const savedApiKey = localStorage.getItem(STORAGE_KEYS.API_KEY);
+                const savedModelName = localStorage.getItem(STORAGE_KEYS.MODEL_NAME);
+                const savedCharacterName = localStorage.getItem(STORAGE_KEYS.CHARACTER_NAME);
+                const savedSystemPrompt = localStorage.getItem(STORAGE_KEYS.SYSTEM_PROMPT);
+                const savedInitialPrompt = localStorage.getItem(STORAGE_KEYS.INITIAL_PROMPT);
+                const savedBgImage = localStorage.getItem(STORAGE_KEYS.BG_IMAGE);
+                const savedCharacterImage = localStorage.getItem(STORAGE_KEYS.CHARACTER_IMAGE);
+                
+                // 填充表单
+                if (savedApiUrl) apiUrlInput.value = savedApiUrl;
+                if (savedApiKey) apiKeyInput.value = savedApiKey;
+                if (savedModelName) modelNameInput.value = savedModelName;
+                if (savedCharacterName) characterNameInput.value = savedCharacterName;
+                if (savedSystemPrompt) {
+                    // 移除可能存在的旧格式要求部分
+                    let cleanPrompt = savedSystemPrompt;
+                    // 如果包含【格式要求】，则只保留前面的部分
+                    if (cleanPrompt.includes('【格式要求】')) {
+                        cleanPrompt = cleanPrompt.split('【格式要求】')[0].trim();
+                    }
+                    // 如果包含旧的JSON格式说明，也尝试移除
+                    if (cleanPrompt.includes('请以以下JSON格式返回')) {
+                        cleanPrompt = cleanPrompt.split('请以以下JSON格式返回')[0].trim();
+                    }
+                    systemPromptInput.value = cleanPrompt;
+                }
+                if (savedInitialPrompt) initialPromptInput.value = savedInitialPrompt;
+                
+                // 预览图片
+                if (savedBgImage) {
+                    bgImagePreview.src = savedBgImage;
+                    bgImagePreview.style.display = 'block';
+                    gameState.bgImage = savedBgImage;
+                }
+                
+                if (savedCharacterImage) {
+                    characterImagePreview.src = savedCharacterImage;
+                    characterImagePreview.style.display = 'block';
+                    gameState.characterImage = savedCharacterImage;
+                }
+                
+                console.log('配置已从本地存储加载');
+            } catch (error) {
+                console.error('从本地存储加载配置失败:', error);
+            }
+        }
+        
+        // 清除本地存储
+        function clearStorage() {
+            try {
+                Object.values(STORAGE_KEYS).forEach(key => {
+                    localStorage.removeItem(key);
+                });
+                
+                // 重置表单
+                apiUrlInput.value = '';
+                apiKeyInput.value = '';
+                modelNameInput.value = '';
+                characterNameInput.value = DEFAULT_SETTINGS.characterName;
+                systemPromptInput.value = DEFAULT_SETTINGS.systemPrompt;
+                initialPromptInput.value = DEFAULT_SETTINGS.initialPrompt;
+                
+                // 清除游戏状态中的好感度等
+                gameState.currentAffection = 50;
+                gameState.currentMood = "中性";
+                gameState.currentExpression = "平静";
+                gameState.messages = [];
+                
+                // 清除图片预览
+                bgImagePreview.src = '';
+                bgImagePreview.style.display = 'none';
+                characterImagePreview.src = '';
+                characterImagePreview.style.display = 'none';
+                
+                // 清除游戏状态中的图片
+                gameState.bgImage = null;
+                gameState.characterImage = null;
+                
+                alert('缓存配置已清除！');
+                console.log('本地存储已清除');
+            } catch (error) {
+                console.error('清除本地存储失败:', error);
+            }
+        }
+        
+        // 恢复默认设置
+        function restoreDefaultSettings() {
+            characterNameInput.value = DEFAULT_SETTINGS.characterName;
+            systemPromptInput.value = DEFAULT_SETTINGS.systemPrompt;
+            initialPromptInput.value = DEFAULT_SETTINGS.initialPrompt;
+            
+            // 更新游戏状态
+            gameState.characterName = DEFAULT_SETTINGS.characterName;
+            gameState.systemPrompt = DEFAULT_SETTINGS.systemPrompt;
+            gameState.initialPrompt = DEFAULT_SETTINGS.initialPrompt;
+            
+            alert('已恢复默认设置！');
+        }
+        
+        // 背景图片上传处理
+        bgUploadBtn.addEventListener('click', () => {
+            bgImageUpload.click();
+        });
+        
+        bgImageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 检查文件类型
+                if (!file.type.match('image.*')) {
+                    alert('请选择图片文件！');
+                    return;
+                }
+                
+                // 检查文件大小（限制为5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('图片大小不能超过5MB！');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // 预览图片
+                    bgImagePreview.src = e.target.result;
+                    bgImagePreview.style.display = 'block';
+                    
+                    // 保存到游戏状态
+                    gameState.bgImage = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 角色图片上传处理
+        characterUploadBtn.addEventListener('click', () => {
+            characterImageUpload.click();
+        });
+        
+        characterImageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 检查文件类型
+                if (!file.type.match('image.*')) {
+                    alert('请选择图片文件！');
+                    return;
+                }
+                
+                // 检查文件大小（限制为5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('图片大小不能超过5MB！');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // 预览图片
+                    characterImagePreview.src = e.target.result;
+                    characterImagePreview.style.display = 'block';
+                    
+                    // 保存到游戏状态
+                    gameState.characterImage = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 从配置切换到游戏界面
+        startGameBtn.addEventListener('click', async () => {
+            // 验证输入
+            if (!apiUrlInput.value.trim()) {
+                alert('请输入API端点URL');
+                return;
+            }
+            
+            if (!apiKeyInput.value.trim()) {
+                alert('请输入API密钥');
+                return;
+            }
+            
+            if (!modelNameInput.value.trim()) {
+                alert('请输入模型名称');
+                return;
+            }
+            
+            if (!characterNameInput.value.trim()) {
+                alert('请输入角色名称');
+                return;
+            }
+            
+            // 保存配置到状态
+            gameState.apiUrl = apiUrlInput.value.trim();
+            gameState.apiKey = apiKeyInput.value.trim();
+            gameState.modelName = modelNameInput.value.trim();
+            gameState.characterName = characterNameInput.value.trim();
+            gameState.systemPrompt = systemPromptInput.value.trim();
+            gameState.initialPrompt = initialPromptInput.value.trim();
+            
+            // 保存配置到本地存储
+            saveConfigToStorage();
+            
+            // 重置游戏状态（确保每次开始都是全新的）
+            gameState.messages = [];
+            gameState.currentAffection = 50;
+            gameState.currentMood = "中性";
+            gameState.currentExpression = "平静";
+            gameState.isProcessing = false;
+            
+            // 清空对话界面
+            dialogueContent.innerHTML = '';
+            optionsContainer.innerHTML = '';
+            
+            // 更新界面
+            characterNameDisplay.textContent = gameState.characterName;
+            
+            // 设置背景图片
+            if (gameState.bgImage) {
+                gameBackground.style.backgroundImage = `url('${gameState.bgImage}')`;
+            } else {
+                // 使用默认背景
+                gameBackground.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a1a2e"/><path d="M0,50 L100,50 M50,0 L50,100" stroke="%23333" stroke-width="1"/></svg>')`;
+            }
+            
+            // 设置角色图片
+            if (gameState.characterImage) {
+                characterImage.src = gameState.characterImage;
+                characterImage.classList.remove('hidden');
+                characterIcon.classList.add('hidden');
+            } else {
+                characterImage.classList.add('hidden');
+                characterIcon.classList.remove('hidden');
+            }
+            
+            // 切换到游戏屏幕
+            configScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            
+            // 初始化游戏（总是重新开始）
+            await initializeGame();
+        });
+        
+        // 清除缓存按钮
+        clearStorageBtn.addEventListener('click', () => {
+            if (confirm('确定要清除所有缓存配置吗？这将清除所有保存的API设置和图片。')) {
+                clearStorage();
+            }
+        });
+        
+        // 恢复默认设置按钮
+        restoreDefaultBtn.addEventListener('click', () => {
+            if (confirm('确定要恢复默认设置吗？这将把角色名称、角色设定和初始对话恢复为默认值。')) {
+                restoreDefaultSettings();
+            }
+        });
+        
+        // 从游戏界面返回配置
+        backToConfigBtn.addEventListener('click', () => {
+            // 切换屏幕
+            gameScreen.classList.add('hidden');
+            configScreen.classList.remove('hidden');
+            
+            // 不保存游戏状态，下次开始会是全新的
+        });
+        
+        // 重置游戏
+        resetGameBtn.addEventListener('click', async () => {
+            if (confirm('确定要重新开始游戏吗？这将清除当前的对话历史。')) {
+                // 清空对话
+                dialogueContent.innerHTML = '';
+                optionsContainer.innerHTML = '';
+                
+                // 重置游戏状态
+                gameState.messages = [];
+                gameState.isProcessing = false;
+                gameState.currentAffection = 50;
+                gameState.currentMood = "中性";
+                gameState.currentExpression = "平静";
+                
+                // 重新初始化游戏
+                await initializeGame();
+            }
+        });
+        
+        // 自定义输入提交
+        customInputSubmit.addEventListener('click', () => {
+            const inputText = customInputField.value.trim();
+            if (inputText) {
+                // 隐藏自定义输入对话框
+                customInputOverlay.classList.add('hidden');
+                customInputField.value = '';
+                
+                // 选择自定义输入作为选项
+                selectOption(inputText);
+            }
+        });
+        
+        // 自定义输入取消
+        customInputCancel.addEventListener('click', () => {
+            customInputOverlay.classList.add('hidden');
+            customInputField.value = '';
+        });
+        
+        // 按回车键提交自定义输入
+        customInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                customInputSubmit.click();
+            }
+        });
+        
+        // 关闭提醒
+        reminderClose.addEventListener('click', () => {
+            reminderOverlay.style.display = 'none';
+        });
+        
+        // 初始化游戏
+        async function initializeGame() {
+            // 显示加载遮罩
+            loadingOverlay.classList.remove('hidden');
+            
+            // 构建完整的系统消息：用户设定的角色设定 + 固定的格式要求 + 当前状态信息
+            const currentStatusInfo = `\n\n当前状态信息：\n- 当前好感度：${gameState.currentAffection}/100\n- 当前情绪：${gameState.currentMood}\n- 当前神态：${gameState.currentExpression}`;
+            const fullSystemPrompt = gameState.systemPrompt + currentStatusInfo + FIXED_FORMAT_REQUIREMENT;
+            
+            // 添加系统消息 - 确保格式要求被正确包含
+            gameState.messages = [
+                {
+                    role: "system",
+                    content: fullSystemPrompt
+                }
+            ];
+            
+            // 添加初始用户消息
+            const initialPrompt = gameState.initialPrompt || "开始游戏";
+            gameState.messages.push({
+                role: "user",
+                content: initialPrompt
+            });
+            
+            // 显示初始用户消息
+            addMessageToHistory('玩家', initialPrompt, 'player');
+            
+            // 发送初始请求
+            await sendToAI();
+            
+            // 隐藏加载遮罩
+            loadingOverlay.classList.add('hidden');
+        }
+        
+        // 发送消息到AI
+        async function sendToAI() {
+            if (gameState.isProcessing) return;
+            
+            gameState.isProcessing = true;
+            loadingOverlay.classList.remove('hidden');
+            disableOptions(true);
+            
+            try {
+                // 准备请求数据
+                const requestData = {
+                    model: gameState.modelName,
+                    messages: gameState.messages,
+                    temperature: 0.7,
+                    max_tokens: 500
+                };
+                
+                // 发送请求
+                const response = await fetch(gameState.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${gameState.apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // 提取AI回复
+                let aiResponse = '';
+                if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                    aiResponse = data.choices[0].message.content;
+                } else {
+                    throw new Error('API返回格式不正确');
+                }
+                
+                // 解析AI回复
+                const parsedResponse = parseAIResponse(aiResponse);
+                
+                // 更新好感度、情绪和神态
+                if (parsedResponse.affection !== undefined) {
+                    // 限制好感度范围在0-100之间
+                    let newAffection = parseInt(parsedResponse.affection);
+                    if (isNaN(newAffection)) newAffection = gameState.currentAffection;
+                    gameState.currentAffection = Math.max(0, Math.min(100, newAffection));
+                }
+                
+                if (parsedResponse.mood) {
+                    gameState.currentMood = parsedResponse.mood;
+                }
+                
+                if (parsedResponse.expression) {
+                    gameState.currentExpression = parsedResponse.expression;
+                }
+                
+                // 显示AI回复到对话框（包含状态信息）
+                addMessageToHistory(gameState.characterName, parsedResponse.response, 'ai', {
+                    affection: gameState.currentAffection,
+                    mood: gameState.currentMood,
+                    expression: gameState.currentExpression
+                });
+                
+                // 添加AI回复到消息历史
+                gameState.messages.push({
+                    role: "assistant",
+                    content: aiResponse
+                });
+                
+                // 显示选项（包括自定义输入选项）
+                displayOptions(parsedResponse.options);
+                
+            } catch (error) {
+                console.error('(⚠️你api某一项填错了😡)API请求错误:', error);
+                
+                // 提供友好的错误信息
+                let errorMessage = `(⚠️可能是链接或模型填错了😡👊👊)系统错误: ${error.message}`;
+                
+                // 检查是否是网络错误
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = '网络连接失败，请检查网络连接后重试😡';
+                }
+                
+                // 检查是否是API密钥错误
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    errorMessage = 'API密钥错误或权限不足，请检查API配置😭';
+                }
+                
+                addMessageToHistory('系统', errorMessage, 'ai');
+                
+                // 提供错误恢复选项
+                displayOptions(["重试", "返回配置"]);
+            } finally {
+                gameState.isProcessing = false;
+                loadingOverlay.classList.add('hidden');
+                disableOptions(false);
+            }
+        }
+        
+        // 解析AI响应
+        function parseAIResponse(aiResponse) {
+            let parsedResponse;
+            
+            try {
+                // 尝试解析JSON
+                parsedResponse = JSON.parse(aiResponse);
+                
+                // 验证响应格式
+                if (!parsedResponse.response || !parsedResponse.options) {
+                    throw new Error("JSON格式正确但缺少必要字段");
+                }
+                
+                // 确保有默认值
+                if (parsedResponse.affection === undefined) {
+                    parsedResponse.affection = gameState.currentAffection;
+                }
+                if (!parsedResponse.mood) {
+                    parsedResponse.mood = "未知";
+                }
+                if (!parsedResponse.expression) {
+                    parsedResponse.expression = "未知";
+                }
+                
+            } catch (jsonError) {
+                console.log('AI响应不是标准JSON格式，尝试提取信息:', jsonError);
+                
+                // 如果不是JSON格式，尝试提取选项和其他信息
+                const lines = aiResponse.split('\n');
+                const options = [];
+                let responseText = '';
+                let affection = gameState.currentAffection;
+                let mood = gameState.currentMood;
+                let expression = gameState.currentExpression;
+                
+                // 查找可能的选项
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // 匹配选项模式：数字开头、括号开头或项目符号
+                    if (line.match(/^(\d+[\.\)]|[-•*])\s+.+$/) || 
+                        line.match(/^选项\d+[:：]/) ||
+                        (line.length > 5 && line.length < 50 && !line.includes('。'))) {
+                        // 清理选项文本
+                        const cleanOption = line
+                            .replace(/^(\d+[\.\)]|[-•*])\s+/, '')
+                            .replace(/^选项\d+[:：]\s*/, '')
+                            .trim();
+                        
+                        if (cleanOption && options.length < 3) {
+                            options.push(cleanOption);
+                        }
+                    } 
+                    // 尝试提取好感度
+                    else if (line.match(/好感度.*?\d+/)) {
+                        const match = line.match(/\d+/);
+                        if (match) {
+                            const extractedAffection = parseInt(match[0]);
+                            if (!isNaN(extractedAffection)) {
+                                affection = Math.max(0, Math.min(100, extractedAffection));
+                            }
+                        }
+                    }
+                    // 尝试提取情绪
+                    else if (line.match(/情绪[:：]/)) {
+                        const extractedMood = line.split(/情绪[:：]\s*/)[1];
+                        if (extractedMood) {
+                            mood = extractedMood.trim();
+                        }
+                    }
+                    // 尝试提取神态
+                    else if (line.match(/神态[:：]/)) {
+                        const extractedExpression = line.split(/神态[:：]\s*/)[1];
+                        if (extractedExpression) {
+                            expression = extractedExpression.trim();
+                        }
+                    }
+                    else if (line && !line.match(/^[{[].*[}\]]$/) && !line.match(/^\s*$/)) {
+                        // 累积响应文本
+                        responseText += line + '\n';
+                    }
+                }
+                
+                // 如果没有找到选项，使用默认选项
+                if (options.length === 0) {
+                    options.push("继续前进", "调查周围", "返回");
+                }
+                
+                // 如果没有响应文本，使用原始响应
+                if (!responseText.trim()) {
+                    responseText = aiResponse.length > 500 ? aiResponse.substring(0, 500) + "..." : aiResponse;
+                }
+                
+                parsedResponse = {
+                    response: responseText.trim(),
+                    options: options.slice(0, 3),
+                    affection: affection,
+                    mood: mood,
+                    expression: expression
+                };
+            }
+            
+            return parsedResponse;
+        }
+        
+        // 添加消息到历史记录并自动滚动（支持显示状态信息）
+        function addMessageToHistory(sender, content, type, status = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `dialogue-message ${type}-message`;
+            
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            
+            // 如果是AI消息且有状态信息，显示状态指示器
+            if (type === 'ai' && status) {
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'status-indicator';
+                
+                // 好感度
+                const affectionStatus = document.createElement('div');
+                affectionStatus.className = 'status-item affection-status';
+                affectionStatus.innerHTML = `<i class="fas fa-heart"></i> <span class="status-label">好感度:</span> <span class="status-value">${status.affection}/100</span>`;
+                statusIndicator.appendChild(affectionStatus);
+                
+                // 情绪
+                const moodStatus = document.createElement('div');
+                moodStatus.className = 'status-item mood-status';
+                moodStatus.innerHTML = `<i class="fas fa-smile"></i> <span class="status-label">情绪:</span> <span class="status-value">${status.mood}</span>`;
+                statusIndicator.appendChild(moodStatus);
+                
+                // 神态
+                const expressionStatus = document.createElement('div');
+                expressionStatus.className = 'status-item expression-status';
+                expressionStatus.innerHTML = `<i class="fas fa-eye"></i> <span class="status-label">神态:</span> <span class="status-value">${status.expression}</span>`;
+                statusIndicator.appendChild(expressionStatus);
+                
+                senderDiv.textContent = sender;
+                messageDiv.appendChild(senderDiv);
+                messageDiv.appendChild(statusIndicator);
+            } else {
+                senderDiv.textContent = sender;
+                messageDiv.appendChild(senderDiv);
+            }
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = content;
+            
+            messageDiv.appendChild(textDiv);
+            
+            dialogueContent.appendChild(messageDiv);
+            
+            // 立即滚动到底部显示最新消息
+            scrollToBottom();
+        }
+        
+        // 滚动对话区域到底部
+        function scrollToBottom() {
+            // 使用requestAnimationFrame确保DOM更新完成后再滚动
+            requestAnimationFrame(() => {
+                // 直接设置scrollTop为scrollHeight
+                conversationContainer.scrollTop = conversationContainer.scrollHeight;
+            });
+        }
+        
+        // 显示选项（包括自定义输入选项）
+        function displayOptions(options) {
+            // 清空选项容器
+            optionsContainer.innerHTML = '';
+            
+            // 创建AI生成的选项按钮
+            options.forEach((option, index) => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'option-btn';
+                optionBtn.innerHTML = `
+                    <div class="option-number">${index + 1}</div>
+                    <span>${option}</span>
+                `;
+                
+                // 设置触摸事件
+                optionBtn.addEventListener('click', () => selectOption(option));
+                optionBtn.addEventListener('touchstart', () => {
+                    optionBtn.style.transform = 'translateY(-3px)';
+                });
+                optionBtn.addEventListener('touchend', () => {
+                    setTimeout(() => {
+                        optionBtn.style.transform = 'translateY(0)';
+                    }, 200);
+                });
+                
+                optionsContainer.appendChild(optionBtn);
+            });
+            
+            // 添加自定义输入选项按钮
+            const customOptionBtn = document.createElement('button');
+            customOptionBtn.className = 'option-btn custom-option-btn';
+            customOptionBtn.innerHTML = `
+                <div class="option-number">4</div>
+                <span><i class="fas fa-keyboard"></i> 自定义输入...</span>
+            `;
+            
+            customOptionBtn.addEventListener('click', () => {
+                // 显示自定义输入对话框
+                customInputOverlay.classList.remove('hidden');
+                customInputField.focus();
+            });
+            
+            customOptionBtn.addEventListener('touchstart', () => {
+                customOptionBtn.style.transform = 'translateY(-3px)';
+            });
+            
+            customOptionBtn.addEventListener('touchend', () => {
+                setTimeout(() => {
+                    customOptionBtn.style.transform = 'translateY(0)';
+                }, 200);
+            });
+            
+            optionsContainer.appendChild(customOptionBtn);
+            
+            // 确保选项区域滚动到最左侧
+            setTimeout(() => {
+                optionsContainer.parentElement.scrollLeft = 0;
+            }, 100);
+        }
+        
+        // 选择选项
+        async function selectOption(option) {
+            // 显示用户选择
+            addMessageToHistory('玩家', option, 'player');
+            
+            // 添加用户消息到历史
+            gameState.messages.push({
+                role: "user",
+                content: option
+            });
+            
+            // 发送到AI
+            await sendToAI();
+        }
+        
+        // 启用/禁用选项
+        function disableOptions(disabled) {
+            const optionButtons = document.querySelectorAll('.option-btn');
+            optionButtons.forEach(btn => {
+                btn.disabled = disabled;
+            });
+            
+            startGameBtn.disabled = disabled;
+            resetGameBtn.disabled = disabled;
+            backToConfigBtn.disabled = disabled;
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 从本地存储加载配置
+            loadConfigFromStorage();
+            
+            // 如果URL参数中有API密钥，自动填充
+            const urlParams = new URLSearchParams(window.location.search);
+            const apiKeyFromUrl = urlParams.get('api_key');
+            if (apiKeyFromUrl) {
+                apiKeyInput.value = apiKeyFromUrl;
+            }
+            
+            // 防止iOS Safari工具栏自动隐藏
+            if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+                document.addEventListener('touchstart', function() {}, {passive: true});
+            }
+            
+            // 防止双击缩放
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, {passive: false});
+            
+            // 监听屏幕方向变化
+            window.addEventListener('resize', () => {
+                // 在移动端，确保游戏界面正确显示
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile && !configScreen.classList.contains('hidden')) {
+                    // 配置界面保持竖屏
+                    document.body.style.overflow = 'auto';
+                }
+            });
+            
+            // 自动隐藏提醒（5秒后）
+            setTimeout(() => {
+                reminderOverlay.style.opacity = '0';
+                reminderOverlay.style.transition = 'opacity 1s';
+                setTimeout(() => {
+                    reminderOverlay.style.display = 'none';
+                }, 1000);
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
