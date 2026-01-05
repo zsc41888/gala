@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZSC 丨 Galgame - AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 作者代码盗用你冯飞😡*/
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: none;
+            touch-action: manipulation;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        
+        /* 配置界面 - 移动端竖屏 */
+        #configScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: 1000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .logo-area {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+        
+        .logo {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+        }
+        
+        .config-form {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #ff7e5f;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: #000;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6464ff, #9d9dff);
+            margin-top: 5px;
+        }
+        
+        .btn-tertiary {
+            background: linear-gradient(90deg, #ff9a5f, #ffc47b);
+            margin-top: 5px;
+        }
+        
+        /* 上传图片区域 */
+        .upload-area {
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed rgba(255, 126, 95, 0.5);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .upload-btn {
+            background: rgba(255, 126, 95, 0.1);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            color: #ff7e5f;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .upload-btn:hover {
+            background: rgba(255, 126, 95, 0.2);
+        }
+        
+        .upload-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid rgba(255, 126, 95, 0.3);
+            display: none;
+        }
+        
+        .upload-hint {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        /* 游戏主界面 - 移动端强制横屏 */
+        #gameScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 移动端强制横屏 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #gameScreen {
+                width: 100vh;
+                height: 100vw;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+            }
+        }
+        
+        /* 全屏背景 */
+        .game-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            /* 移除背景上的毛玻璃效果 */
+        }
+        
+        /* 游戏内容区域 */
+        .game-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 顶部背景和角色区域 */
+        .game-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            background: transparent;
+            max-height: calc(100% - 120px);
+        }
+        
+        /* 左侧角色区域 */
+        .character-area {
+            flex: 0 0 40%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 15px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.15);
+            border-right: 3px solid rgba(255, 126, 95, 0.7);
+        }
+        
+        .character {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .character-image {
+            max-width: 100%;
+            max-height: 70%;
+            border-radius: 10px;
+            border: 3px solid rgba(255, 126, 95, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            object-fit: cover;
+        }
+        
+        .character-icon {
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+            display: none;
+        }
+        
+        .character-name {
+            font-size: 1.3rem;
+            color: #ff7e5f;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 126, 95, 0.3);
+            margin-top: 15px;
+        }
+        
+        /* 右侧对话区域 */
+        .dialogue-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            min-width: 0;
+        }
+        
+        /* 对话内容区域 */
+        .conversation-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 0;
+        }
+        
+        .dialogue-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            min-height: 100%;
+        }
+        
+        .dialogue-message {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+            background: rgba(0, 0, 0, 0.25);
+        }
+        
+        .player-message {
+            border-left: 3px solid #ff7e5f;
+            margin-left: 5px;
+        }
+        
+        .ai-message {
+            border-left: 3px solid #4a90e2;
+            margin-right: 5px;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #ff7e5f;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ai-message .message-sender {
+            color: #4a90e2;
+        }
+        
+        .message-text {
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .affection-status {
+            border: none !important;
+            color: #ff7e5f;
+        }
+        
+        .mood-status {
+            border: none !important;
+            color: #4a90e2;
+        }
+        
+        .expression-status {
+            border: none !important;
+            color: #9b59b6;
+        }
+        
+        .status-label {
+            font-weight: bold;
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        /* 底部选项区域 - 横向排列 */
+        .options-area {
+            height: 120px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 3px solid rgba(255, 126, 95, 0.7);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            position: relative;
+            z-index: 5;
+            flex-shrink: 0;
+            scroll-behavior: smooth;
+        }
+        
+        .options-container {
+            display: flex;
+            gap: 10px;
+            height: 100%;
+            align-items: center;
+            padding: 10px 0;
+            width: max-content;
+            min-width: 100%;
+        }
+        
+        .option-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            padding: 12px 15px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+            max-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .option-btn:active {
+            background: rgba(255, 126, 95, 0.2);
+            border-color: #ff7e5f;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .option-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 126, 95, 0.1) 50%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .option-btn:hover::before,
+        .option-btn:active::before {
+            opacity: 1;
+        }
+        
+        .option-btn span {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .option-number {
+            position: absolute;
+            top: 6px;
+            left: 10px;
+            font-size: 0.8rem;
+            color: rgba(255, 126, 95, 0.8);
+            font-weight: bold;
+        }
+        
+        /* 自定义输入选项 */
+        .custom-option-btn {
+            background: rgba(100, 100, 255, 0.1);
+            border: 2px solid rgba(100, 100, 255, 0.5);
+        }
+        
+        .custom-option-btn:active {
+            background: rgba(100, 100, 255, 0.2);
+            border-color: #6464ff;
+        }
+        
+        .custom-option-btn .option-number {
+            color: rgba(100, 100, 255, 0.8);
+        }
+        
+        /* 自定义输入对话框 */
+        .custom-input-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .custom-input-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(100, 100, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .custom-input-title {
+            font-size: 1.2rem;
+            color: #6464ff;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .custom-input-field {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .custom-input-field:focus {
+            outline: none;
+            border-color: #6464ff;
+        }
+        
+        .custom-input-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .custom-input-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .custom-input-submit {
+            background: linear-gradient(90deg, #6464ff, #9d9dff);
+            color: white;
+        }
+        
+        .custom-input-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .custom-input-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 控制按钮 */
+        .controls-area {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            color: #fff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-btn:active {
+            background: rgba(255, 126, 95, 0.3);
+            transform: scale(0.95);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 加载遮罩 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 126, 95, 0.3);
+            border-radius: 50%;
+            border-top-color: #ff7e5f;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-text {
+            color: #ff7e5f;
+            font-size: 1rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 毛玻璃提醒 */
+        .reminder-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.4);
+            color: #ff7e5f;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 1100;
+            text-align: center;
+            border: 2px solid rgba(255, 126, 95, 0.5);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .reminder-close {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 25px;
+            height: 25px;
+            background: rgba(255, 126, 95, 0.8);
+            border-radius: 50%;
+            border: none;
+            color: #000;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 126, 95, 0.3);
+            border-radius: 6px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 126, 95, 0.5);
+        }
+        
+        /* 移动端滚动条优化 - 修复滑动问题 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            
+            /* 修复底部选项区域滑动问题 */
+            .options-area {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+                touch-action: pan-x;
+                overscroll-behavior-x: contain;
+                /* 确保滚动条可见 */
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 126, 95, 0.5) rgba(0, 0, 0, 0.1);
+            }
+            
+            .options-area::-webkit-scrollbar {
+                display: block;
+                height: 6px;
+            }
+            
+            .options-area::-webkit-scrollbar-thumb {
+                background: rgba(255, 126, 95, 0.6);
+                border-radius: 10px;
+                border: 2px solid rgba(0, 0, 0, 0.2);
+            }
+            
+            .options-area::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+                margin: 0 5px;
+            }
+            
+            /* 改善选项按钮间距 */
+            .option-btn {
+                min-width: 140px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+                min-height: 65px;
+            }
+            
+            .options-container {
+                gap: 8px;
+            }
+        }
+        
+        /* 选项区域滚动条优化 */
+        .options-area::-webkit-scrollbar {
+            height: 12px;
+        }
+        
+        .options-area::-webkit-scrollbar-thumb {
+            background: rgba(255, 126, 95, 0.5);
+            border-radius: 8px;
+            border: 3px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .options-area::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+        
+        /* 桌面端样式 */
+        @media (min-width: 1025px) {
+            .character-area {
+                flex: 0 0 35%;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .config-form {
+                padding: 25px;
+            }
+            
+            .option-btn {
+                min-width: 180px;
+                font-size: 1rem;
+            }
+            
+            .dialogue-message {
+                padding: 12px 15px;
+                font-size: 1.1rem;
+            }
+            
+            .message-text {
+                font-size: 1.05rem;
+            }
+            
+            .status-item {
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* 移动端横屏优化 */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            /* 原生横屏模式 */
+            #gameScreen {
+                transform: none;
+            }
+            
+            .character-area {
+                flex: 0 0 35%;
+            }
+            
+            .controls-area {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .control-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .dialogue-message {
+                padding: 10px 12px;
+                margin-bottom: 12px;
+            }
+            
+            .option-btn {
+                min-width: 140px;
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .status-item {
+                font-size: 0.75rem;
+                padding: 3px 6px;
+            }
+        }
+        
+        /* 移动端强制横屏 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #gameScreen {
+                width: 100vh;
+                height: 100vw;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+            }
+            
+            .character-area {
+                flex: 0 0 40%;
+            }
+            
+            .conversation-container {
+                padding: 12px;
+            }
+            
+            .dialogue-content {
+                font-size: 0.95rem;
+            }
+            
+            .dialogue-message {
+                padding: 8px 10px;
+                margin-bottom: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .message-text {
+                font-size: 0.9rem;
+            }
+            
+            .option-btn {
+                min-width: 130px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+                min-height: 65px;
+            }
+            
+            .options-area {
+                height: 110px;
+                padding: 0 12px;
+                /* 确保滑动正常 */
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            .controls-area {
+                top: 8px;
+                right: 8px;
+            }
+            
+            .control-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            .status-indicator {
+                gap: 5px;
+            }
+            
+            .status-item {
+                font-size: 0.7rem;
+                padding: 2px 5px;
+            }
+            
+            .reminder-overlay {
+                bottom: 15px;
+                font-size: 0.9rem;
+                padding: 10px 16px;
+                max-width: 90%;
+            }
+        }
+        
+        /* 非常小的屏幕设备 */
+        @media (max-width: 480px) {
+            .character-area {
+                flex: 0 0 45%;
+            }
+            
+            .option-btn {
+                min-width: 120px;
+                padding: 8px 10px;
+                font-size: 0.8rem;
+                min-height: 60px;
+            }
+            
+            .options-area {
+                height: 100px;
+                padding: 0 10px;
+                /* 确保滑动正常 */
+                touch-action: pan-x;
+                scrollbar-width: thin;
+            }
+            
+            .options-container {
+                gap: 8px;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .config-form {
+                padding: 15px;
+            }
+            
+            .status-indicator {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .status-item {
+                font-size: 0.65rem;
+                padding: 2px 4px;
+            }
+            
+            .reminder-overlay {
+                bottom: 10px;
+                font-size: 0.85rem;
+                padding: 8px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 毛玻璃提醒 -->
+    <div class="reminder-overlay" id="reminderOverlay">
+        ----版本1.45----
+        去给作者三连😡
+        有问题找作者
+        <button class="reminder-close" id="reminderClose">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <!-- 配置界面 - 移动端竖屏 -->
+    <div id="configScreen">
+        <div class="logo-area">
+            <div class="logo">AI Galgame</div>
+            <div class="subtitle">全部基于AI的galagame</div>
+        </div>
+        
+        <div class="config-form">
+            <!-- 上传背景图片区域 -->
+            <div class="upload-area">
+                <div class="form-group">
+                    <label for="bgImageUpload"><i class="fas fa-image"></i> 上传背景图片</label>
+                    <input type="file" id="bgImageUpload" accept="image/*" style="display: none;">
+                    <div class="upload-btn" id="bgUploadBtn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>选择背景图片</span>
+                    </div>
+                    <img id="bgImagePreview" class="image-preview" alt="背景预览">
+                    <div class="upload-hint">上传一张图片作为游戏背景（建议使用横屏图片）</div>
+                </div>
+            </div>
+            
+            <!-- 上传角色图片区域 -->
+            <div class="upload-area">
+                <div class="form-group">
+                    <label for="characterImageUpload"><i class="fas fa-user-circle"></i> 上传角色图片（可选）</label>
+                    <input type="file" id="characterImageUpload" accept="image/*" style="display: none;">
+                    <div class="upload-btn" id="characterUploadBtn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>选择角色图片</span>
+                    </div>
+                    <img id="characterImagePreview" class="image-preview" alt="角色预览">
+                    <div class="upload-hint">上传一张角色图片，将显示在游戏左侧（可选）</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="apiUrl"><i class="fas fa-link"></i> ----API端点URL--------------链接末尾大概率要加/chat/completions</label>
+                <input type="text" id="apiUrl" placeholder="链接末尾可能要加/chat/completions" value="/chat/completions">
+            </div>
+            
+            <div class="form-group">
+                <label for="apiKey"><i class="fas fa-key"></i> API密钥</label>
+                <input type="password" id="apiKey" placeholder="输入您的API密钥">
+            </div>
+            
+            <div class="form-group">
+                <label for="modelName"><i class="fas fa-microchip"></i> 模型名称</label>
+                <input type="text" id="modelName" placeholder="例如: deepseek-ai/DeepSeek-R1" value="">
+            </div>
+            
+            <div class="form-group">
+                <label for="characterName"><i class="fas fa-user"></i> 角色名称</label>
+                <input type="text" id="characterName" placeholder="例如: AI女友" value="猫娘女友">
+            </div>
+            
+            <div class="form-group">
+                <label for="systemPrompt"><i class="fas fa-book"></i> 角色设定</label>
+                <textarea id="systemPrompt" placeholder="在这里描述角色的性格、背景、说话风格等设定。AI回复的格式已固定为JSON格式，无需在此处指定。">你是一个猫娘，与user是情侣关系，语气可爱粘人</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="initialPrompt"><i class="fas fa-play-circle"></i> 初始对话</label>
+                <input type="text" id="initialPrompt" placeholder="例如:自己想😡👊👊" value="自己想😡👊👊">
+            </div>
+            
+            <button id="startGameBtn" class="btn">
+                <i class="fas fa-play"></i> 开始游戏
+            </button>
+            
+            <button id="restoreDefaultBtn" class="btn btn-tertiary">
+                <i class="fas fa-undo"></i> 恢复默认设置
+            </button>
+            
+            <button id="clearStorageBtn" class="btn btn-secondary">
+                <i class="fas fa-trash"></i> 清除缓存配置
+            </button>
+        </div>
+    </div>
+    
+    <!-- 游戏界面 - 移动端强制横屏 -->
+    <div id="gameScreen" class="hidden">
+        <!-- 全屏背景 -->
+        <div class="game-bg" id="gameBackground"></div>
+        
+        <!-- 游戏内容区域 -->
+        <div class="game-content">
+            <!-- 主游戏区域 -->
+            <div class="game-area">
+                <!-- 左侧角色区域 -->
+                <div class="character-area">
+                    <div class="character">
+                        <img id="characterImage" class="character-image hidden" alt="角色图片">
+                        <i class="fas fa-user-circle character-icon" id="characterIcon"></i>
+                        <div class="character-name" id="characterNameDisplay">猫娘女友</div>
+                    </div>
+                </div>
+                
+                <!-- 右侧对话区域 -->
+                <div class="dialogue-area">
+                    <!-- 对话内容区域 -->
+                    <div class="conversation-container" id="conversationContainer">
+                        <div class="dialogue-content" id="dialogueContent">
+                            <!-- 对话内容将动态显示在这里 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部选项区域 -->
+            <div class="options-area" id="optionsArea">
+                <div class="options-container" id="optionsContainer">
+                    <!-- 选项按钮将动态生成在这里 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="controls-area">
+            <button class="control-btn" id="backToConfigBtn" title="返回设置">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="control-btn" id="resetGameBtn" title="重新开始">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+        
+        <!-- 加载遮罩 -->
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">🤔AI思考中不要退出...
+            \速度取决于模型质量</div>
+        </div>
+        
+        <!-- 自定义输入对话框 -->
+        <div class="custom-input-overlay hidden" id="customInputOverlay">
+            <div class="custom-input-container">
+                <div class="custom-input-title">
+                    <i class="fas fa-keyboard"></i> 自定义输入
+                </div>
+                <input type="text" class="custom-input-field" id="customInputField" placeholder="请输入您想说的话...">
+                <div class="custom-input-buttons">
+                    <button class="custom-input-btn custom-input-submit" id="customInputSubmit">发送</button>
+                    <button class="custom-input-btn custom-input-cancel" id="customInputCancel">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const _0x167c97=_0x42eb;(function(_0x14a0c9,_0xcbb651){const _0x238bd5=_0x42eb,_0xab844a=_0x14a0c9();while(!![]){try{const _0x102031=-parseInt(_0x238bd5(0x1cf))/0x1+-parseInt(_0x238bd5(0x140))/0x2+parseInt(_0x238bd5(0x1b7))/0x3*(parseInt(_0x238bd5(0x185))/0x4)+parseInt(_0x238bd5(0x1d9))/0x5+parseInt(_0x238bd5(0x1f3))/0x6*(-parseInt(_0x238bd5(0x1dc))/0x7)+parseInt(_0x238bd5(0x1f1))/0x8*(-parseInt(_0x238bd5(0x15f))/0x9)+parseInt(_0x238bd5(0x1ce))/0xa*(parseInt(_0x238bd5(0x1a1))/0xb);if(_0x102031===_0xcbb651)break;else _0xab844a['push'](_0xab844a['shift']());}catch(_0x10f165){_0xab844a['push'](_0xab844a['shift']());}}}(_0x4abb,0x541c9));const gameState={'apiUrl':'','apiKey':'','modelName':'','characterName':'','systemPrompt':'','initialPrompt':'','bgImage':null,'characterImage':null,'messages':[],'isProcessing':![],'currentAffection':0x32,'currentMood':'中性','currentExpression':'平静'},DEFAULT_SETTINGS={'characterName':_0x167c97(0x16f),'systemPrompt':_0x167c97(0x1b8),'initialPrompt':_0x167c97(0x17c)},configScreen=document[_0x167c97(0x15a)](_0x167c97(0x146)),gameScreen=document[_0x167c97(0x15a)]('gameScreen'),startGameBtn=document[_0x167c97(0x15a)](_0x167c97(0x1e9)),clearStorageBtn=document[_0x167c97(0x15a)](_0x167c97(0x154)),restoreDefaultBtn=document['getElementById']('restoreDefaultBtn'),backToConfigBtn=document[_0x167c97(0x15a)](_0x167c97(0x196)),resetGameBtn=document[_0x167c97(0x15a)](_0x167c97(0x176)),characterNameDisplay=document['getElementById'](_0x167c97(0x18d)),characterImage=document[_0x167c97(0x15a)]('characterImage'),characterIcon=document[_0x167c97(0x15a)](_0x167c97(0x1b1)),dialogueContent=document[_0x167c97(0x15a)](_0x167c97(0x1e3)),conversationContainer=document[_0x167c97(0x15a)](_0x167c97(0x1ec)),optionsContainer=document[_0x167c97(0x15a)](_0x167c97(0x17f)),loadingOverlay=document[_0x167c97(0x15a)](_0x167c97(0x1d1)),gameBackground=document[_0x167c97(0x15a)](_0x167c97(0x139)),customInputOverlay=document[_0x167c97(0x15a)]('customInputOverlay'),customInputField=document[_0x167c97(0x15a)](_0x167c97(0x15e)),customInputSubmit=document[_0x167c97(0x15a)]('customInputSubmit'),customInputCancel=document['getElementById'](_0x167c97(0x1b4)),apiUrlInput=document[_0x167c97(0x15a)]('apiUrl'),apiKeyInput=document[_0x167c97(0x15a)]('apiKey'),modelNameInput=document[_0x167c97(0x15a)](_0x167c97(0x1e0)),characterNameInput=document['getElementById'](_0x167c97(0x1a4)),systemPromptInput=document['getElementById'](_0x167c97(0x16e)),initialPromptInput=document[_0x167c97(0x15a)](_0x167c97(0x1db)),bgImageUpload=document['getElementById'](_0x167c97(0x190)),bgUploadBtn=document[_0x167c97(0x15a)](_0x167c97(0x1da)),bgImagePreview=document['getElementById'](_0x167c97(0x195)),characterImageUpload=document['getElementById'](_0x167c97(0x136)),characterUploadBtn=document['getElementById'](_0x167c97(0x1f9)),characterImagePreview=document['getElementById'](_0x167c97(0x164)),reminderOverlay=document[_0x167c97(0x15a)](_0x167c97(0x14d)),reminderClose=document[_0x167c97(0x15a)](_0x167c97(0x1e2)),STORAGE_KEYS={'API_URL':_0x167c97(0x1b2),'API_KEY':_0x167c97(0x13e),'MODEL_NAME':_0x167c97(0x13b),'CHARACTER_NAME':_0x167c97(0x1d3),'SYSTEM_PROMPT':_0x167c97(0x1d7),'INITIAL_PROMPT':'galgame_initial_prompt','BG_IMAGE':_0x167c97(0x1f7),'CHARACTER_IMAGE':_0x167c97(0x1de)},FIXED_FORMAT_REQUIREMENT=_0x167c97(0x131);function saveConfigToStorage(){const _0x528314=_0x167c97;try{localStorage['setItem'](STORAGE_KEYS['API_URL'],gameState[_0x528314(0x1c5)]),localStorage['setItem'](STORAGE_KEYS[_0x528314(0x177)],gameState[_0x528314(0x1c7)]),localStorage[_0x528314(0x1d8)](STORAGE_KEYS[_0x528314(0x16b)],gameState[_0x528314(0x1e0)]),localStorage[_0x528314(0x1d8)](STORAGE_KEYS[_0x528314(0x1d0)],gameState[_0x528314(0x1a4)]),localStorage[_0x528314(0x1d8)](STORAGE_KEYS[_0x528314(0x15d)],gameState[_0x528314(0x16e)]),localStorage[_0x528314(0x1d8)](STORAGE_KEYS['INITIAL_PROMPT'],gameState[_0x528314(0x1db)]);if(gameState['bgImage']&&gameState[_0x528314(0x1bf)][_0x528314(0x189)]<0xf4240)localStorage[_0x528314(0x1d8)](STORAGE_KEYS[_0x528314(0x155)],gameState['bgImage']);else gameState[_0x528314(0x1bf)]&&console['warn'](_0x528314(0x1dd));if(gameState[_0x528314(0x178)]&&gameState[_0x528314(0x178)][_0x528314(0x189)]<0xf4240)localStorage[_0x528314(0x1d8)](STORAGE_KEYS[_0x528314(0x175)],gameState['characterImage']);else gameState[_0x528314(0x178)]&&console[_0x528314(0x1af)]('角色图片太大，未保存到缓存');console['log']('配置已保存到本地存储');}catch(_0x430de0){console[_0x528314(0x1ac)](_0x528314(0x1ef),_0x430de0);}}function loadConfigFromStorage(){const _0x495795=_0x167c97;try{const _0x2d024b=localStorage['getItem'](STORAGE_KEYS[_0x495795(0x186)]),_0x53f42d=localStorage['getItem'](STORAGE_KEYS[_0x495795(0x177)]),_0x5954cc=localStorage[_0x495795(0x151)](STORAGE_KEYS[_0x495795(0x16b)]),_0x20d7a7=localStorage['getItem'](STORAGE_KEYS[_0x495795(0x1d0)]),_0x27551f=localStorage[_0x495795(0x151)](STORAGE_KEYS['SYSTEM_PROMPT']),_0x583ebb=localStorage[_0x495795(0x151)](STORAGE_KEYS[_0x495795(0x1f4)]),_0x2d3af3=localStorage[_0x495795(0x151)](STORAGE_KEYS[_0x495795(0x155)]),_0x5634ee=localStorage[_0x495795(0x151)](STORAGE_KEYS['CHARACTER_IMAGE']);if(_0x2d024b)apiUrlInput[_0x495795(0x167)]=_0x2d024b;if(_0x53f42d)apiKeyInput[_0x495795(0x167)]=_0x53f42d;if(_0x5954cc)modelNameInput[_0x495795(0x167)]=_0x5954cc;if(_0x20d7a7)characterNameInput[_0x495795(0x167)]=_0x20d7a7;if(_0x27551f){let _0x8cddf1=_0x27551f;_0x8cddf1[_0x495795(0x1f6)]('【格式要求】')&&(_0x8cddf1=_0x8cddf1[_0x495795(0x169)]('【格式要求】')[0x0][_0x495795(0x1c3)]()),_0x8cddf1[_0x495795(0x1f6)](_0x495795(0x184))&&(_0x8cddf1=_0x8cddf1[_0x495795(0x169)](_0x495795(0x184))[0x0]['trim']()),systemPromptInput[_0x495795(0x167)]=_0x8cddf1;}if(_0x583ebb)initialPromptInput[_0x495795(0x167)]=_0x583ebb;_0x2d3af3&&(bgImagePreview['src']=_0x2d3af3,bgImagePreview[_0x495795(0x180)]['display']='block',gameState[_0x495795(0x1bf)]=_0x2d3af3),_0x5634ee&&(characterImagePreview['src']=_0x5634ee,characterImagePreview['style'][_0x495795(0x142)]=_0x495795(0x1e4),gameState['characterImage']=_0x5634ee),console['log']('配置已从本地存储加载');}catch(_0x5749df){console['error'](_0x495795(0x1f5),_0x5749df);}}function clearStorage(){const _0x34f3b2=_0x167c97;try{Object[_0x34f3b2(0x1bd)](STORAGE_KEYS)[_0x34f3b2(0x12d)](_0x24a9e7=>{const _0x41af37=_0x34f3b2;localStorage[_0x41af37(0x198)](_0x24a9e7);}),apiUrlInput[_0x34f3b2(0x167)]='',apiKeyInput[_0x34f3b2(0x167)]='',modelNameInput[_0x34f3b2(0x167)]='',characterNameInput['value']=DEFAULT_SETTINGS[_0x34f3b2(0x1a4)],systemPromptInput['value']=DEFAULT_SETTINGS[_0x34f3b2(0x16e)],initialPromptInput[_0x34f3b2(0x167)]=DEFAULT_SETTINGS[_0x34f3b2(0x1db)],gameState[_0x34f3b2(0x144)]=0x32,gameState[_0x34f3b2(0x162)]='中性',gameState['currentExpression']='平静',gameState[_0x34f3b2(0x1fa)]=[],bgImagePreview[_0x34f3b2(0x1be)]='',bgImagePreview[_0x34f3b2(0x180)][_0x34f3b2(0x142)]=_0x34f3b2(0x1f0),characterImagePreview[_0x34f3b2(0x1be)]='',characterImagePreview[_0x34f3b2(0x180)][_0x34f3b2(0x142)]='none',gameState[_0x34f3b2(0x1bf)]=null,gameState[_0x34f3b2(0x178)]=null,alert(_0x34f3b2(0x171)),console[_0x34f3b2(0x148)](_0x34f3b2(0x14e));}catch(_0x2f74d6){console[_0x34f3b2(0x1ac)](_0x34f3b2(0x14f),_0x2f74d6);}}function restoreDefaultSettings(){const _0x3af764=_0x167c97;characterNameInput[_0x3af764(0x167)]=DEFAULT_SETTINGS[_0x3af764(0x1a4)],systemPromptInput[_0x3af764(0x167)]=DEFAULT_SETTINGS[_0x3af764(0x16e)],initialPromptInput[_0x3af764(0x167)]=DEFAULT_SETTINGS['initialPrompt'],gameState['characterName']=DEFAULT_SETTINGS[_0x3af764(0x1a4)],gameState[_0x3af764(0x16e)]=DEFAULT_SETTINGS[_0x3af764(0x16e)],gameState[_0x3af764(0x1db)]=DEFAULT_SETTINGS['initialPrompt'],alert(_0x3af764(0x1a2));}bgUploadBtn[_0x167c97(0x15c)](_0x167c97(0x137),()=>{bgImageUpload['click']();}),bgImageUpload[_0x167c97(0x15c)](_0x167c97(0x12f),function(_0x2926be){const _0x3587d8=_0x167c97,_0x5e48a8=_0x2926be[_0x3587d8(0x197)][_0x3587d8(0x19c)][0x0];if(_0x5e48a8){if(!_0x5e48a8[_0x3587d8(0x1ab)][_0x3587d8(0x17b)](_0x3587d8(0x1e5))){alert('请选择图片文件！');return;}if(_0x5e48a8[_0x3587d8(0x192)]>0x5*0x400*0x400){alert('图片大小不能超过5MB！');return;}const _0x27c601=new FileReader();_0x27c601[_0x3587d8(0x1b9)]=function(_0x279a3f){const _0x6f4851=_0x3587d8;bgImagePreview['src']=_0x279a3f[_0x6f4851(0x197)]['result'],bgImagePreview[_0x6f4851(0x180)][_0x6f4851(0x142)]=_0x6f4851(0x1e4),gameState[_0x6f4851(0x1bf)]=_0x279a3f[_0x6f4851(0x197)]['result'];},_0x27c601[_0x3587d8(0x160)](_0x5e48a8);}}),characterUploadBtn[_0x167c97(0x15c)](_0x167c97(0x137),()=>{const _0x4e1848=_0x167c97;characterImageUpload[_0x4e1848(0x137)]();}),characterImageUpload[_0x167c97(0x15c)](_0x167c97(0x12f),function(_0x120a46){const _0x29e79a=_0x167c97,_0x5ebd6b=_0x120a46[_0x29e79a(0x197)][_0x29e79a(0x19c)][0x0];if(_0x5ebd6b){if(!_0x5ebd6b['type'][_0x29e79a(0x17b)](_0x29e79a(0x1e5))){alert('请选择图片文件！');return;}if(_0x5ebd6b[_0x29e79a(0x192)]>0x5*0x400*0x400){alert(_0x29e79a(0x1e6));return;}const _0x256039=new FileReader();_0x256039[_0x29e79a(0x1b9)]=function(_0x3d3899){const _0x12177d=_0x29e79a;characterImagePreview[_0x12177d(0x1be)]=_0x3d3899[_0x12177d(0x197)][_0x12177d(0x12c)],characterImagePreview[_0x12177d(0x180)][_0x12177d(0x142)]=_0x12177d(0x1e4),gameState[_0x12177d(0x178)]=_0x3d3899[_0x12177d(0x197)][_0x12177d(0x12c)];},_0x256039[_0x29e79a(0x160)](_0x5ebd6b);}}),startGameBtn[_0x167c97(0x15c)](_0x167c97(0x137),async()=>{const _0x54b6d9=_0x167c97;if(!apiUrlInput['value'][_0x54b6d9(0x1c3)]()){alert('请输入API端点URL');return;}if(!apiKeyInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)]()){alert(_0x54b6d9(0x1d6));return;}if(!modelNameInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)]()){alert(_0x54b6d9(0x170));return;}if(!characterNameInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)]()){alert(_0x54b6d9(0x1e1));return;}gameState[_0x54b6d9(0x1c5)]=apiUrlInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)](),gameState[_0x54b6d9(0x1c7)]=apiKeyInput['value'][_0x54b6d9(0x1c3)](),gameState[_0x54b6d9(0x1e0)]=modelNameInput[_0x54b6d9(0x167)]['trim'](),gameState[_0x54b6d9(0x1a4)]=characterNameInput[_0x54b6d9(0x167)]['trim'](),gameState[_0x54b6d9(0x16e)]=systemPromptInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)](),gameState['initialPrompt']=initialPromptInput[_0x54b6d9(0x167)][_0x54b6d9(0x1c3)](),saveConfigToStorage(),gameState[_0x54b6d9(0x1fa)]=[],gameState['currentAffection']=0x32,gameState['currentMood']='中性',gameState[_0x54b6d9(0x1d4)]='平静',gameState[_0x54b6d9(0x14c)]=![],dialogueContent[_0x54b6d9(0x159)]='',optionsContainer[_0x54b6d9(0x159)]='',characterNameDisplay[_0x54b6d9(0x1c4)]=gameState[_0x54b6d9(0x1a4)],gameState[_0x54b6d9(0x1bf)]?gameBackground[_0x54b6d9(0x180)][_0x54b6d9(0x1c6)]=_0x54b6d9(0x19a)+gameState[_0x54b6d9(0x1bf)]+'\x27)':gameBackground[_0x54b6d9(0x180)][_0x54b6d9(0x1c6)]=_0x54b6d9(0x179),gameState[_0x54b6d9(0x178)]?(characterImage[_0x54b6d9(0x1be)]=gameState[_0x54b6d9(0x178)],characterImage[_0x54b6d9(0x1a0)][_0x54b6d9(0x163)](_0x54b6d9(0x13a)),characterIcon['classList']['add']('hidden')):(characterImage[_0x54b6d9(0x1a0)][_0x54b6d9(0x132)](_0x54b6d9(0x13a)),characterIcon[_0x54b6d9(0x1a0)]['remove'](_0x54b6d9(0x13a))),configScreen['classList'][_0x54b6d9(0x132)](_0x54b6d9(0x13a)),gameScreen[_0x54b6d9(0x1a0)][_0x54b6d9(0x163)]('hidden'),await initializeGame();}),clearStorageBtn[_0x167c97(0x15c)](_0x167c97(0x137),()=>{const _0x3c08c0=_0x167c97;confirm(_0x3c08c0(0x194))&&clearStorage();}),restoreDefaultBtn[_0x167c97(0x15c)](_0x167c97(0x137),()=>{const _0x4f9341=_0x167c97;confirm(_0x4f9341(0x1f2))&&restoreDefaultSettings();}),backToConfigBtn['addEventListener'](_0x167c97(0x137),()=>{const _0x4f956f=_0x167c97;gameScreen[_0x4f956f(0x1a0)][_0x4f956f(0x132)]('hidden'),configScreen[_0x4f956f(0x1a0)][_0x4f956f(0x163)](_0x4f956f(0x13a));}),resetGameBtn[_0x167c97(0x15c)](_0x167c97(0x137),async()=>{const _0x538c82=_0x167c97;confirm(_0x538c82(0x16a))&&(dialogueContent[_0x538c82(0x159)]='',optionsContainer[_0x538c82(0x159)]='',gameState[_0x538c82(0x1fa)]=[],gameState['isProcessing']=![],gameState[_0x538c82(0x144)]=0x32,gameState['currentMood']='中性',gameState[_0x538c82(0x1d4)]='平静',await initializeGame());}),customInputSubmit[_0x167c97(0x15c)](_0x167c97(0x137),()=>{const _0x2d1c93=_0x167c97,_0x123336=customInputField[_0x2d1c93(0x167)][_0x2d1c93(0x1c3)]();_0x123336&&(customInputOverlay[_0x2d1c93(0x1a0)][_0x2d1c93(0x132)](_0x2d1c93(0x13a)),customInputField[_0x2d1c93(0x167)]='',selectOption(_0x123336));}),customInputCancel[_0x167c97(0x15c)]('click',()=>{const _0x3806e9=_0x167c97;customInputOverlay['classList']['add'](_0x3806e9(0x13a)),customInputField[_0x3806e9(0x167)]='';}),customInputField['addEventListener']('keypress',_0xb5f781=>{const _0x4ec20e=_0x167c97;_0xb5f781['key']===_0x4ec20e(0x1ca)&&customInputSubmit[_0x4ec20e(0x137)]();}),reminderClose[_0x167c97(0x15c)](_0x167c97(0x137),()=>{const _0x1b4d64=_0x167c97;reminderOverlay[_0x1b4d64(0x180)][_0x1b4d64(0x142)]=_0x1b4d64(0x1f0);});async function initializeGame(){const _0x4dd6bc=_0x167c97;loadingOverlay[_0x4dd6bc(0x1a0)][_0x4dd6bc(0x163)](_0x4dd6bc(0x13a));const _0x296213=_0x4dd6bc(0x16c)+gameState[_0x4dd6bc(0x144)]+_0x4dd6bc(0x166)+gameState[_0x4dd6bc(0x162)]+_0x4dd6bc(0x19b)+gameState[_0x4dd6bc(0x1d4)],_0x5da785=gameState[_0x4dd6bc(0x16e)]+_0x296213+FIXED_FORMAT_REQUIREMENT;gameState['messages']=[{'role':_0x4dd6bc(0x173),'content':_0x5da785}];const _0x1b7990=gameState[_0x4dd6bc(0x1db)]||_0x4dd6bc(0x168);gameState[_0x4dd6bc(0x1fa)][_0x4dd6bc(0x19d)]({'role':'user','content':_0x1b7990}),addMessageToHistory('玩家',_0x1b7990,_0x4dd6bc(0x1c2)),await sendToAI(),loadingOverlay[_0x4dd6bc(0x1a0)][_0x4dd6bc(0x132)](_0x4dd6bc(0x13a));}async function sendToAI(){const _0x4b2130=_0x167c97;if(gameState[_0x4b2130(0x14c)])return;gameState[_0x4b2130(0x14c)]=!![],loadingOverlay[_0x4b2130(0x1a0)][_0x4b2130(0x163)](_0x4b2130(0x13a)),disableOptions(!![]);try{const _0x3e4914={'model':gameState[_0x4b2130(0x1e0)],'messages':gameState['messages'],'temperature':0.7,'max_tokens':0x1f4},_0x1957a2=await fetch(gameState[_0x4b2130(0x1c5)],{'method':_0x4b2130(0x18b),'headers':{'Authorization':_0x4b2130(0x1ae)+gameState[_0x4b2130(0x1c7)],'Content-Type':_0x4b2130(0x1df)},'body':JSON[_0x4b2130(0x1b0)](_0x3e4914)});if(!_0x1957a2['ok']){const _0x31d65b=await _0x1957a2[_0x4b2130(0x1d5)]();throw new Error('API请求失败:\x20'+_0x1957a2['status']+'\x20'+_0x1957a2[_0x4b2130(0x182)]);}const _0x4b421=await _0x1957a2['json']();let _0x3a45c4='';if(_0x4b421[_0x4b2130(0x18c)]&&_0x4b421[_0x4b2130(0x18c)][_0x4b2130(0x189)]>0x0&&_0x4b421['choices'][0x0][_0x4b2130(0x193)])_0x3a45c4=_0x4b421[_0x4b2130(0x18c)][0x0][_0x4b2130(0x193)][_0x4b2130(0x1a6)];else throw new Error(_0x4b2130(0x1b6));const _0x4330a2=parseAIResponse(_0x3a45c4);if(_0x4330a2['affection']!==undefined){let _0x3278a4=parseInt(_0x4330a2[_0x4b2130(0x153)]);if(isNaN(_0x3278a4))_0x3278a4=gameState[_0x4b2130(0x144)];gameState[_0x4b2130(0x144)]=Math['max'](0x0,Math[_0x4b2130(0x1c8)](0x64,_0x3278a4));}_0x4330a2[_0x4b2130(0x17e)]&&(gameState[_0x4b2130(0x162)]=_0x4330a2[_0x4b2130(0x17e)]),_0x4330a2[_0x4b2130(0x17d)]&&(gameState[_0x4b2130(0x1d4)]=_0x4330a2[_0x4b2130(0x17d)]),addMessageToHistory(gameState[_0x4b2130(0x1a4)],_0x4330a2[_0x4b2130(0x1ed)],'ai',{'affection':gameState[_0x4b2130(0x144)],'mood':gameState[_0x4b2130(0x162)],'expression':gameState[_0x4b2130(0x1d4)]}),gameState[_0x4b2130(0x1fa)][_0x4b2130(0x19d)]({'role':_0x4b2130(0x135),'content':_0x3a45c4}),displayOptions(_0x4330a2[_0x4b2130(0x1c1)]);}catch(_0x59f2ba){console[_0x4b2130(0x1ac)](_0x4b2130(0x1bc),_0x59f2ba);let _0x11e798=_0x4b2130(0x1ba)+_0x59f2ba[_0x4b2130(0x193)];(_0x59f2ba['message'][_0x4b2130(0x1f6)](_0x4b2130(0x16d))||_0x59f2ba[_0x4b2130(0x193)]['includes'](_0x4b2130(0x1ee)))&&(_0x11e798=_0x4b2130(0x1cb)),(_0x59f2ba['message'][_0x4b2130(0x1f6)]('401')||_0x59f2ba[_0x4b2130(0x193)][_0x4b2130(0x1f6)]('403'))&&(_0x11e798=_0x4b2130(0x156)),addMessageToHistory('系统',_0x11e798,'ai'),displayOptions(['重试','返回配置']);}finally{gameState['isProcessing']=![],loadingOverlay[_0x4b2130(0x1a0)][_0x4b2130(0x132)](_0x4b2130(0x13a)),disableOptions(![]);}}function parseAIResponse(_0x5c1224){const _0x5403d7=_0x167c97;let _0x481041;try{_0x481041=JSON[_0x5403d7(0x1a5)](_0x5c1224);if(!_0x481041[_0x5403d7(0x1ed)]||!_0x481041[_0x5403d7(0x1c1)])throw new Error(_0x5403d7(0x1a8));_0x481041[_0x5403d7(0x153)]===undefined&&(_0x481041[_0x5403d7(0x153)]=gameState[_0x5403d7(0x144)]),!_0x481041[_0x5403d7(0x17e)]&&(_0x481041[_0x5403d7(0x17e)]='未知'),!_0x481041[_0x5403d7(0x17d)]&&(_0x481041['expression']='未知');}catch(_0x4d1823){console[_0x5403d7(0x148)](_0x5403d7(0x1ea),_0x4d1823);const _0x486140=_0x5c1224[_0x5403d7(0x169)]('\x0a'),_0x351553=[];let _0x19eb75='',_0x5b60ab=gameState[_0x5403d7(0x144)],_0x38a4b3=gameState[_0x5403d7(0x162)],_0xefddef=gameState[_0x5403d7(0x1d4)];for(let _0x4b7126=0x0;_0x4b7126<_0x486140[_0x5403d7(0x189)];_0x4b7126++){const _0xb877ed=_0x486140[_0x4b7126][_0x5403d7(0x1c3)]();if(_0xb877ed[_0x5403d7(0x17b)](/^(\d+[\.\)]|[-•*])\s+.+$/)||_0xb877ed['match'](/^选项\d+[:：]/)||_0xb877ed[_0x5403d7(0x189)]>0x5&&_0xb877ed['length']<0x32&&!_0xb877ed[_0x5403d7(0x1f6)]('。')){const _0x1667bc=_0xb877ed['replace'](/^(\d+[\.\)]|[-•*])\s+/,'')['replace'](/^选项\d+[:：]\s*/,'')[_0x5403d7(0x1c3)]();_0x1667bc&&_0x351553['length']<0x3&&_0x351553[_0x5403d7(0x19d)](_0x1667bc);}else{if(_0xb877ed['match'](/好感度.*?\d+/)){const _0x3b7c21=_0xb877ed[_0x5403d7(0x17b)](/\d+/);if(_0x3b7c21){const _0x29ec1f=parseInt(_0x3b7c21[0x0]);!isNaN(_0x29ec1f)&&(_0x5b60ab=Math[_0x5403d7(0x150)](0x0,Math['min'](0x64,_0x29ec1f)));}}else{if(_0xb877ed[_0x5403d7(0x17b)](/情绪[:：]/)){const _0x372f4a=_0xb877ed[_0x5403d7(0x169)](/情绪[:：]\s*/)[0x1];_0x372f4a&&(_0x38a4b3=_0x372f4a['trim']());}else{if(_0xb877ed[_0x5403d7(0x17b)](/神态[:：]/)){const _0x3b2eb0=_0xb877ed['split'](/神态[:：]\s*/)[0x1];_0x3b2eb0&&(_0xefddef=_0x3b2eb0[_0x5403d7(0x1c3)]());}else _0xb877ed&&!_0xb877ed[_0x5403d7(0x17b)](/^[{[].*[}\]]$/)&&!_0xb877ed[_0x5403d7(0x17b)](/^\s*$/)&&(_0x19eb75+=_0xb877ed+'\x0a');}}}}_0x351553['length']===0x0&&_0x351553[_0x5403d7(0x19d)]('继续前进',_0x5403d7(0x1aa),'返回'),!_0x19eb75['trim']()&&(_0x19eb75=_0x5c1224[_0x5403d7(0x189)]>0x1f4?_0x5c1224[_0x5403d7(0x187)](0x0,0x1f4)+_0x5403d7(0x134):_0x5c1224),_0x481041={'response':_0x19eb75[_0x5403d7(0x1c3)](),'options':_0x351553[_0x5403d7(0x1a3)](0x0,0x3),'affection':_0x5b60ab,'mood':_0x38a4b3,'expression':_0xefddef};}return _0x481041;}function _0x42eb(_0x24a25d,_0x2b84af){_0x24a25d=_0x24a25d-0x12b;const _0x4abb87=_0x4abb();let _0x42ebbe=_0x4abb87[_0x24a25d];return _0x42ebbe;}function addMessageToHistory(_0x41cb86,_0x409a56,_0x533aec,_0x6a9853=null){const _0x34e5b9=_0x167c97,_0x63ace0=document['createElement'](_0x34e5b9(0x14a));_0x63ace0['className']=_0x34e5b9(0x1bb)+_0x533aec+_0x34e5b9(0x181);const _0x208ebd=document[_0x34e5b9(0x12e)]('div');_0x208ebd[_0x34e5b9(0x141)]=_0x34e5b9(0x191);if(_0x533aec==='ai'&&_0x6a9853){const _0x446c9b=document[_0x34e5b9(0x12e)]('div');_0x446c9b[_0x34e5b9(0x141)]=_0x34e5b9(0x165);const _0x23e8ec=document['createElement'](_0x34e5b9(0x14a));_0x23e8ec['className']=_0x34e5b9(0x15b),_0x23e8ec[_0x34e5b9(0x159)]=_0x34e5b9(0x18f)+_0x6a9853[_0x34e5b9(0x153)]+_0x34e5b9(0x1d2),_0x446c9b['appendChild'](_0x23e8ec);const _0x4435a1=document['createElement']('div');_0x4435a1[_0x34e5b9(0x141)]='status-item\x20mood-status',_0x4435a1[_0x34e5b9(0x159)]=_0x34e5b9(0x183)+_0x6a9853[_0x34e5b9(0x17e)]+_0x34e5b9(0x1c9),_0x446c9b[_0x34e5b9(0x1a7)](_0x4435a1);const _0x5aafe4=document[_0x34e5b9(0x12e)]('div');_0x5aafe4[_0x34e5b9(0x141)]=_0x34e5b9(0x19e),_0x5aafe4[_0x34e5b9(0x159)]='<i\x20class=\x22fas\x20fa-eye\x22></i>\x20<span\x20class=\x22status-label\x22>神态:</span>\x20<span\x20class=\x22status-value\x22>'+_0x6a9853[_0x34e5b9(0x17d)]+_0x34e5b9(0x1c9),_0x446c9b[_0x34e5b9(0x1a7)](_0x5aafe4),_0x208ebd['textContent']=_0x41cb86,_0x63ace0[_0x34e5b9(0x1a7)](_0x208ebd),_0x63ace0[_0x34e5b9(0x1a7)](_0x446c9b);}else _0x208ebd[_0x34e5b9(0x1c4)]=_0x41cb86,_0x63ace0['appendChild'](_0x208ebd);const _0x49c5a0=document[_0x34e5b9(0x12e)](_0x34e5b9(0x14a));_0x49c5a0['className']=_0x34e5b9(0x1b5),_0x49c5a0[_0x34e5b9(0x1c4)]=_0x409a56,_0x63ace0[_0x34e5b9(0x1a7)](_0x49c5a0),dialogueContent[_0x34e5b9(0x1a7)](_0x63ace0),scrollToBottom();}function scrollToBottom(){requestAnimationFrame(()=>{const _0x58b8d3=_0x42eb;conversationContainer[_0x58b8d3(0x1e8)]=conversationContainer[_0x58b8d3(0x199)];});}function displayOptions(_0x3f8075){const _0x70ee3f=_0x167c97;optionsContainer['innerHTML']='',_0x3f8075[_0x70ee3f(0x12d)]((_0x271d72,_0x255ebf)=>{const _0x1b398f=_0x70ee3f,_0x117ade=document[_0x1b398f(0x12e)](_0x1b398f(0x13f));_0x117ade[_0x1b398f(0x141)]=_0x1b398f(0x1cd),_0x117ade[_0x1b398f(0x159)]=_0x1b398f(0x17a)+(_0x255ebf+0x1)+_0x1b398f(0x161)+_0x271d72+_0x1b398f(0x158),_0x117ade[_0x1b398f(0x15c)](_0x1b398f(0x137),()=>selectOption(_0x271d72)),_0x117ade[_0x1b398f(0x15c)](_0x1b398f(0x1a9),()=>{const _0x12d64d=_0x1b398f;_0x117ade[_0x12d64d(0x180)][_0x12d64d(0x1eb)]=_0x12d64d(0x14b);}),_0x117ade[_0x1b398f(0x15c)](_0x1b398f(0x1ad),()=>{setTimeout(()=>{const _0x2c77fe=_0x42eb;_0x117ade[_0x2c77fe(0x180)][_0x2c77fe(0x1eb)]='translateY(0)';},0xc8);}),optionsContainer[_0x1b398f(0x1a7)](_0x117ade);});const _0x3548a9=document[_0x70ee3f(0x12e)](_0x70ee3f(0x13f));_0x3548a9['className']=_0x70ee3f(0x13d),_0x3548a9['innerHTML']=_0x70ee3f(0x157),_0x3548a9[_0x70ee3f(0x15c)](_0x70ee3f(0x137),()=>{const _0x5df490=_0x70ee3f;customInputOverlay[_0x5df490(0x1a0)]['remove'](_0x5df490(0x13a)),customInputField['focus']();}),_0x3548a9[_0x70ee3f(0x15c)](_0x70ee3f(0x1a9),()=>{const _0xd6a215=_0x70ee3f;_0x3548a9[_0xd6a215(0x180)][_0xd6a215(0x1eb)]=_0xd6a215(0x14b);}),_0x3548a9['addEventListener']('touchend',()=>{setTimeout(()=>{const _0x57e9cb=_0x42eb;_0x3548a9[_0x57e9cb(0x180)]['transform']='translateY(0)';},0xc8);}),optionsContainer[_0x70ee3f(0x1a7)](_0x3548a9),setTimeout(()=>{const _0x465176=_0x70ee3f;optionsContainer[_0x465176(0x138)][_0x465176(0x1cc)]=0x0;},0x64);}async function selectOption(_0x5eb7cc){const _0x485ed1=_0x167c97;addMessageToHistory('玩家',_0x5eb7cc,_0x485ed1(0x1c2)),gameState[_0x485ed1(0x1fa)][_0x485ed1(0x19d)]({'role':_0x485ed1(0x1c0),'content':_0x5eb7cc}),await sendToAI();}function _0x4abb(){const _0x41ceba=['system','disabled','CHARACTER_IMAGE','resetGameBtn','API_KEY','characterImage','linear-gradient(rgba(0,\x200,\x200,\x200.7),\x20rgba(0,\x200,\x200,\x200.7)),\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20url(\x27data:image/svg+xml,<svg\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20width=\x22100\x22\x20height=\x22100\x22\x20viewBox=\x220\x200\x20100\x20100\x22><rect\x20width=\x22100\x22\x20height=\x22100\x22\x20fill=\x22%231a1a2e\x22/><path\x20d=\x22M0,50\x20L100,50\x20M50,0\x20L50,100\x22\x20stroke=\x22%23333\x22\x20stroke-width=\x221\x22/></svg>\x27)','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22option-number\x22>','match','自己想😡👊👊','expression','mood','optionsContainer','style','-message','statusText','<i\x20class=\x22fas\x20fa-smile\x22></i>\x20<span\x20class=\x22status-label\x22>情绪:</span>\x20<span\x20class=\x22status-value\x22>','请以以下JSON格式返回','84zFsDdk','API_URL','substring','body','length','search','POST','choices','characterNameDisplay','contains','<i\x20class=\x22fas\x20fa-heart\x22></i>\x20<span\x20class=\x22status-label\x22>好感度:</span>\x20<span\x20class=\x22status-value\x22>','bgImageUpload','message-sender','size','message','确定要清除所有缓存配置吗？这将清除所有保存的API设置和图片。','bgImagePreview','backToConfigBtn','target','removeItem','scrollHeight','url(\x27','\x0a-\x20当前神态：','files','push','status-item\x20expression-status','location','classList','22ylhTIH','已恢复默认设置！','slice','characterName','parse','content','appendChild','JSON格式正确但缺少必要字段','touchstart','调查周围','type','error','touchend','Bearer\x20','warn','stringify','characterIcon','galgame_api_url','api_key','customInputCancel','message-text','API返回格式不正确','8163RdfJTO','你是一个猫娘，与user是情侣关系，语气可爱粘人','onload','(⚠️可能是链接或模型填错了😡👊👊)系统错误:\x20','dialogue-message\x20','(⚠️你api某一项填错了😡)API请求错误:','values','src','bgImage','user','options','player','trim','textContent','apiUrl','backgroundImage','apiKey','min','</span>','Enter','网络连接失败，请检查网络连接后重试😡','scrollLeft','option-btn','8213390bUSOCi','460012vLHKST','CHARACTER_NAME','loadingOverlay','/100</span>','galgame_character_name','currentExpression','text','请输入API密钥','galgame_system_prompt','setItem','1925010zWXRNg','bgUploadBtn','initialPrompt','4189556CcrqUg','背景图片太大，未保存到缓存','galgame_character_image','application/json','modelName','请输入角色名称','reminderClose','dialogueContent','block','image.*','图片大小不能超过5MB！','opacity\x201s','scrollTop','startGameBtn','AI响应不是标准JSON格式，尝试提取信息:','transform','conversationContainer','response','NetworkError','保存配置到本地存储失败:','none','23848uyqXfh','确定要恢复默认设置吗？这将把角色名称、角色设定和初始对话恢复为默认值。','6Wkysde','INITIAL_PROMPT','从本地存储加载配置失败:','includes','galgame_bg_image','transition','characterUploadBtn','messages','test','result','forEach','createElement','change','opacity','\x0a\x0a【格式要求】\x0a必须使用中文。请确保在每次回复中提供三个选项供玩家选择，选项尽量简短，并计算并返回当前的好感度、情绪和神态。三个选项中必须有两个选项态度是相反的（例如：一个积极/同意，一个消极/拒绝，第三个可以是中立或其他态度）。请以以下JSON格式返回你的回复：\x0a{\x0a\x20\x20\x22response\x22:\x20\x22你的回复内容\x22,\x0a\x20\x20\x22options\x22:\x20[\x22选项1\x22,\x20\x22选项2\x22,\x20\x22选项3\x22],\x0a\x20\x20\x22affection\x22:\x20当前好感度值(整数，范围0-100),\x0a\x20\x20\x22mood\x22:\x20\x22当前情绪描述\x22,\x0a\x20\x20\x22expression\x22:\x20\x22当前神态描述\x22\x0a}\x0a请严格遵守这个JSON格式，不要添加任何其他内容。生成的选项为用户的动作而不是ai的，选项内的人称不要搞错。好感度应该根据之前的互动和当前对话内容计算，情绪和神态应该与当前对话内容一致。语言和选项应该更符合现实，无比真实。生成的三个选项中必须有两个选项态度是相反的。ai语言中的动作应该加上括号','add','resize','...','assistant','characterImageUpload','click','parentElement','gameBackground','hidden','galgame_model_name','userAgent','option-btn\x20custom-option-btn','galgame_api_key','button','248666MuplOg','className','display','auto','currentAffection','now','configScreen','preventDefault','log','DOMContentLoaded','div','translateY(-3px)','isProcessing','reminderOverlay','本地存储已清除','清除本地存储失败:','max','getItem','overflow','affection','clearStorageBtn','BG_IMAGE','API密钥错误或权限不足，请检查API配置😭','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22option-number\x22>4</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span><i\x20class=\x22fas\x20fa-keyboard\x22></i>\x20自定义输入...</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','innerHTML','getElementById','status-item\x20affection-status','addEventListener','SYSTEM_PROMPT','customInputField','1683fDkPOl','readAsDataURL','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span>','currentMood','remove','characterImagePreview','status-indicator','/100\x0a-\x20当前情绪：','value','开始游戏','split','确定要重新开始游戏吗？这将清除当前的对话历史。','MODEL_NAME','\x0a\x0a当前状态信息：\x0a-\x20当前好感度：','Failed\x20to\x20fetch','systemPrompt','猫娘女友','请输入模型名称','缓存配置已清除！','.option-btn'];_0x4abb=function(){return _0x41ceba;};return _0x4abb();}function disableOptions(_0x25c7bb){const _0x5314c3=_0x167c97,_0x460b75=document['querySelectorAll'](_0x5314c3(0x172));_0x460b75[_0x5314c3(0x12d)](_0x20e258=>{_0x20e258['disabled']=_0x25c7bb;}),startGameBtn[_0x5314c3(0x174)]=_0x25c7bb,resetGameBtn['disabled']=_0x25c7bb,backToConfigBtn[_0x5314c3(0x174)]=_0x25c7bb;}document['addEventListener'](_0x167c97(0x149),()=>{const _0x5855c5=_0x167c97;loadConfigFromStorage();const _0x93a27c=new URLSearchParams(window[_0x5855c5(0x19f)][_0x5855c5(0x18a)]),_0x3ae3dd=_0x93a27c['get'](_0x5855c5(0x1b3));_0x3ae3dd&&(apiKeyInput[_0x5855c5(0x167)]=_0x3ae3dd);/(iPad|iPhone|iPod)/g[_0x5855c5(0x12b)](navigator[_0x5855c5(0x13c)])&&document[_0x5855c5(0x15c)](_0x5855c5(0x1a9),function(){},{'passive':!![]});let _0x3df5c2=0x0;document['addEventListener'](_0x5855c5(0x1ad),function(_0xf36e91){const _0x20db44=_0x5855c5,_0x40482b=Date[_0x20db44(0x145)]();_0x40482b-_0x3df5c2<=0x12c&&_0xf36e91[_0x20db44(0x147)](),_0x3df5c2=_0x40482b;},{'passive':![]}),window[_0x5855c5(0x15c)](_0x5855c5(0x133),()=>{const _0x521798=_0x5855c5,_0x4a833b=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i[_0x521798(0x12b)](navigator[_0x521798(0x13c)]);_0x4a833b&&!configScreen[_0x521798(0x1a0)][_0x521798(0x18e)]('hidden')&&(document[_0x521798(0x188)][_0x521798(0x180)][_0x521798(0x152)]=_0x521798(0x143));}),setTimeout(()=>{const _0x2fb360=_0x5855c5;reminderOverlay[_0x2fb360(0x180)][_0x2fb360(0x130)]='0',reminderOverlay[_0x2fb360(0x180)][_0x2fb360(0x1f8)]=_0x2fb360(0x1e7),setTimeout(()=>{const _0x132fdd=_0x2fb360;reminderOverlay[_0x132fdd(0x180)][_0x132fdd(0x142)]=_0x132fdd(0x1f0);},0x3e8);},0x1388);});
+    </script>
+</body>
+</html>
