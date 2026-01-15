@@ -21,7 +21,7 @@ https://b23.tv/7NGd8O0
 
 ## 🚀 快速开始
 
-加密网页:[https://zsc41888.github.io/gala](https://zsc41888.github.io/gala) 立即使用
+gala网页:[https://zsc41888.github.io/gala](https://zsc41888.github.io/gala) 立即使用
 
 我的官网:[https://zsc41888.github.io/zscnb](https://zsc41888.github.io/zscnb) 
 
